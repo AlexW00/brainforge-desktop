@@ -3,18 +3,18 @@ import { ViewProvider } from '../../contexts/ViewContext'
 import { useWorkspace } from '../../contexts/WorkspaceContext'
 import { ViewName } from '../../types/navigation'
 import { Panel } from '../composites/Panel'
-import { Browser } from './Browser'
-import { Files } from './Files'
+import { BrowserView } from './Browser'
+import { NodeView } from './Node'
 
 const viewComponents: Record<ViewName, JSX.Element> = {
-  browser: <Browser />,
-  files: <Files />,
+  browser: <BrowserView />,
+  files: <NodeView />,
   home: <div>Home Page</div>
 }
 
 const getViewComponent = (name: ViewName) => viewComponents[name] || viewComponents.home
 
-export function WorkspaceRenderer() {
+export function WorkspaceView() {
   const { views, viewIndices, setActiveView, removeView, splitView, activeViewId } = useWorkspace()
 
   return (

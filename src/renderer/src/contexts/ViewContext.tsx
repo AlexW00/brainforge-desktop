@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as React from 'react'
-import { View } from '../stores/navigation'
+import { View } from '../stores/workspace'
 import { ViewName, ViewProps } from '../types/navigation'
 import { useWorkspace } from './WorkspaceContext'
 

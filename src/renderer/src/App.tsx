@@ -1,7 +1,7 @@
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { useEffect, useState } from 'react'
 import { AppSidebar } from './components/app-sidebar'
-import { WorkspaceRenderer } from './components/views/WorkspaceRenderer'
+import { WorkspaceView } from './components/views/Workspace'
 import { FileCacheProvider } from './contexts/FileCacheContext'
 import { WorkspaceProvider } from './contexts/WorkspaceContext'
 
@@ -36,7 +36,7 @@ function App() {
             <div className="relative z-10 flex h-full">
               <AppSidebar />
               <div className="flex-1 pl-12">
-                <WorkspaceRenderer />
+                <WorkspaceView />
               </div>
             </div>
           </div>

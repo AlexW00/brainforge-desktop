@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as React from 'react'
-import type { NavigationState } from '../stores/navigation'
-import { useNavigationStore } from '../stores/navigation'
+import type { WorkspaceState } from '../stores/workspace'
+import { useNavigationStore } from '../stores/workspace'
 
 type WorkspaceContextType = Pick<
-  NavigationState,
+  WorkspaceState,
   | 'setViewProps'
   | 'setViewProp'
   | 'navigate'

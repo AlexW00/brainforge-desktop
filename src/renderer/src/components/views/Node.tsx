@@ -4,7 +4,7 @@ import { useView } from '../../contexts/ViewContext'
 import { FileTable } from '../composites/file-table'
 import { PathBreadcrumbs } from '../composites/path-breadcrumbs'
 
-export function Files() {
+export function NodeView() {
   const { view, navigate, setViewProp } = useView<'files'>()
   const { isInitialized, listDirectory, getNode } = useFileCache()
 

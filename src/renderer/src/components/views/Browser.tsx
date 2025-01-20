@@ -9,7 +9,7 @@ type ScanElement = {
   offset: number
 }
 
-export function Browser() {
+export function BrowserView() {
   const { view, setViewProp, goBack, goForward } = useView<'browser'>()
   const webviewRef = useRef<Electron.WebviewTag>(null)
   const [scanElement, setScanElement] = useState<ScanElement | null>(null)

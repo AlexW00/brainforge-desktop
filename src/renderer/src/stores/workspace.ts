@@ -17,7 +17,7 @@ export const DEFAULT_VIEWS = new Map<ViewName, View<ViewName>>([
   ['browser', { name: 'browser', props: {}, icon: Globe }]
 ])
 
-export type NavigationState = {
+export type WorkspaceState = {
   views: Map<string, Array<View<ViewName>>>
   viewIndices: Map<string, number>
   activeViewId: string
@@ -39,7 +39,7 @@ export type NavigationState = {
   splitView: (viewId: string, direction: 'horizontal' | 'vertical') => void
 }
 
-export const useNavigationStore = create<NavigationState>((set, get) => ({
+export const useNavigationStore = create<WorkspaceState>((set, get) => ({
   views: new Map([['base', [DEFAULT_VIEWS.get('home')!]]]),
   viewIndices: new Map([['base', 0]]),
   activeViewId: 'base',
