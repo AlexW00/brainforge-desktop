@@ -29,7 +29,7 @@ const ViewContext = React.createContext<ViewContextType<any> | null>(null)
 export function useView<T extends ViewName>() {
   const context = React.useContext(ViewContext)
   if (!context) {
-    throw new Error('useNavigation must be used within a NavigationProvider')
+    throw new Error('useView must be used within a ViewProvider')
   }
 
   return context as ViewContextType<T>

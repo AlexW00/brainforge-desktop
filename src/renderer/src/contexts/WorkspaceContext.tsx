@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as React from 'react'
 import type { WorkspaceState } from '../stores/workspace'
-import { useNavigationStore } from '../stores/workspace'
+import { useWorkspaceStore } from '../stores/workspace'
 
 type WorkspaceContextType = Pick<
   WorkspaceState,
@@ -19,6 +19,8 @@ type WorkspaceContextType = Pick<
   | 'removeView'
   | 'setActiveView'
   | 'splitView'
+  | 'layout'
+  | 'updateSplitPanel'
 >
 
 export const WorkspaceContext = React.createContext<WorkspaceContextType | null>(null)
@@ -33,6 +35,7 @@ export function useWorkspace() {
     activeViewId: context.activeViewId,
     views: context.views,
     viewIndices: context.viewIndices,
+    layout: context.layout,
     setViewProps: context.setViewProps,
     setViewProp: context.setViewProp,
     navigate: context.navigate,
@@ -42,13 +45,14 @@ export function useWorkspace() {
     canGoForward: context.canGoForward,
     addHomeView: context.addHomeView,
     splitView: context.splitView,
+    updateSplitPanel: context.updateSplitPanel,
     removeView: context.removeView,
     setActiveView: context.setActiveView
   }
 }
 
 export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
-  const store = useNavigationStore()
+  const store = useWorkspaceStore()
   const activeViewId = store.activeViewId || 'view1'
 
   React.useEffect(() => {
@@ -88,6 +92,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       views: store.views,
       activeViewId: store.activeViewId,
       viewIndices: store.viewIndices,
+      layout: store.layout,
       setViewProps: store.setViewProps,
       setViewProp: store.setViewProp,
       navigate: store.navigate,
@@ -98,7 +103,8 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       addHomeView: store.addHomeView,
       splitView: store.splitView,
       removeView: store.removeView,
-      setActiveView: store.setActiveView
+      setActiveView: store.setActiveView,
+      updateSplitPanel: store.updateSplitPanel
     }
   }, [store])
 

@@ -1,3 +1,4 @@
+import { SplitDirection } from '@devbookhq/splitter'
 import {
   ArrowLeft,
   ArrowRight,
@@ -11,22 +12,14 @@ import { useView } from '../../contexts/ViewContext'
 import { ViewName } from '../../types/navigation'
 
 interface PanelTitleBarProps {
-  viewId: string
   name: ViewName
   Icon: LucideIcon
-  onSplit: (viewId: string) => void
-  onClose: (viewId: string) => void
+  onSplit: (direction: SplitDirection) => void
+  onClose: () => void
   isActive?: boolean
 }
 
-export function PanelTitleBar({
-  viewId,
-  name,
-  Icon,
-  onSplit,
-  onClose,
-  isActive
-}: PanelTitleBarProps) {
+export function PanelTitleBar({ name, Icon, onSplit, onClose, isActive }: PanelTitleBarProps) {
   const { canGoBack, canGoForward, goBack, goForward } = useView()
   const [isAltPressed, setIsAltPressed] = useState(false)
   const [isHoveringIcon, setIsHoveringIcon] = useState(false)
@@ -84,7 +77,9 @@ export function PanelTitleBar({
         <button
           onClick={(e) => {
             e.stopPropagation()
-            onSplit(viewId)
+            onSplit(
+              isAltPressed && isHoveringIcon ? SplitDirection.Vertical : SplitDirection.Horizontal
+            )
           }}
           onMouseEnter={() => setIsHoveringIcon(true)}
           onMouseLeave={() => setIsHoveringIcon(false)}
@@ -100,7 +95,7 @@ export function PanelTitleBar({
         <button
           onClick={(e) => {
             e.stopPropagation()
-            onClose(viewId)
+            onClose()
           }}
           className="hover:bg-muted rounded p-1"
         >

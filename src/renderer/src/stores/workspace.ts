@@ -1,3 +1,4 @@
+import { SplitDirection } from '@devbookhq/splitter'
 import { enableMapSet, produce } from 'immer'
 import { FolderOpen, Globe, Home, LucideIcon } from 'lucide-react'
 import { create } from 'zustand'
@@ -17,10 +18,25 @@ export const DEFAULT_VIEWS = new Map<ViewName, View<ViewName>>([
   ['browser', { name: 'browser', props: {}, icon: Globe }]
 ])
 
+export interface Panel {
+  viewId: string
+}
+
+export interface SplitPanel {
+  id: string
+  panels: [Layout, Layout]
+  direction: SplitDirection
+  size: number // percentage between panels (e.g. 50 means equal split)
+}
+
+export type Layout = Panel | SplitPanel
+
 export type WorkspaceState = {
   views: Map<string, Array<View<ViewName>>>
   viewIndices: Map<string, number>
   activeViewId: string
+  layout: Layout
+
   addHomeView: () => void
   removeView: (viewId: string) => void
   navigate: <T extends ViewName>(viewId: string, view: T, props?: ViewProps[T]) => void
@@ -36,36 +52,123 @@ export type WorkspaceState = {
   goBack: (viewId: string) => void
   goForward: (viewId: string) => void
   setActiveView: (viewId: string) => void
-  splitView: (viewId: string, direction: 'horizontal' | 'vertical') => void
+  splitView: (viewId: string, direction: SplitDirection) => void
+  setLayout: (layout: Layout) => void
+  updateSplitPanel: (panelId: string, direction: SplitDirection, size: number) => void
 }
 
-export const useNavigationStore = create<WorkspaceState>((set, get) => ({
+const removePanelFromLayout = (layout: Layout, viewId: string): Layout | null => {
+  if ('viewId' in layout) {
+    return layout.viewId === viewId ? null : layout
+  }
+
+  const [left, right] = layout.panels.map((panel) => removePanelFromLayout(panel, viewId))
+
+  if (left === null && right === null) return null
+  if (left === null) return right
+  if (right === null) return left
+
+  return {
+    ...layout,
+    panels: [left, right]
+  }
+}
+
+const updateSplitPanelInLayout = (
+  layout: Layout,
+  panelId: string,
+  direction: SplitDirection,
+  size: number
+): Layout => {
+  if ('panels' in layout) {
+    if (layout.id === panelId) {
+      return {
+        ...layout,
+        direction,
+        size
+      }
+    }
+
+    return {
+      ...layout,
+      panels: [
+        updateSplitPanelInLayout(layout.panels[0], panelId, direction, size),
+        updateSplitPanelInLayout(layout.panels[1], panelId, direction, size)
+      ]
+    }
+  }
+
+  return layout
+}
+
+const splitPanelInLayout = (
+  layout: Layout,
+  splitViewId: string,
+  insertViewId: string,
+  direction: SplitDirection
+): Layout => {
+  if ('viewId' in layout) {
+    console.log('splitPanelInLayout', layout.viewId, splitViewId)
+    if (layout.viewId === splitViewId) {
+      return {
+        id: crypto.randomUUID(),
+        direction,
+        size: 50,
+        panels: [layout, { viewId: insertViewId }]
+      }
+    } else {
+      return layout
+    }
+  }
+
+  if ('panels' in layout) {
+    return {
+      ...layout,
+      panels: [
+        splitPanelInLayout(layout.panels[0], splitViewId, insertViewId, direction),
+        splitPanelInLayout(layout.panels[1], splitViewId, insertViewId, direction)
+      ]
+    }
+  }
+
+  throw new Error('Invalid layout')
+}
+
+export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   views: new Map([['base', [DEFAULT_VIEWS.get('home')!]]]),
   viewIndices: new Map([['base', 0]]),
   activeViewId: 'base',
-
-  splitView: (viewId: string, direction: 'horizontal' | 'vertical') => {
+  layout: {
+    viewId: 'base' // Default to showing browser view
+  },
+  splitView: (viewId: string, direction: SplitDirection) => {
     console.log('splitView', viewId, direction)
     const view = get().views.get(viewId)
-    if (!view) return
+    if (!view) {
+      console.error('Could not find view', viewId)
+      return
+    }
     const newViewId = crypto.randomUUID()
+
     set(
       produce((state) => {
         state.views.set(newViewId, view)
         state.viewIndices.set(newViewId, view.length - 1)
         state.activeViewId = newViewId
+        state.layout = splitPanelInLayout(state.layout, viewId, newViewId, direction)
+        console.log('new layout', state.layout)
       })
     )
   },
 
   addHomeView: () => {
-    // add empty home view
     const viewId = crypto.randomUUID()
     set(
       produce((state) => {
         state.views.set(viewId, [DEFAULT_VIEWS.get('home')!])
         state.viewIndices.set(viewId, 0)
         state.activeViewId = viewId
+        state.layout = { viewId }
       })
     )
   },
@@ -74,15 +177,29 @@ export const useNavigationStore = create<WorkspaceState>((set, get) => ({
     set(
       produce((state) => {
         if (state.views.size === 1 && viewId === 'base') {
-          state.views.set('base', [DEFAULT_VIEWS.get('home')])
+          // Reset to default state for base view
+          state.views.set('base', [DEFAULT_VIEWS.get('home')!])
           state.viewIndices.set('base', 0)
+          state.layout = { viewId: 'base' }
         } else {
           state.views.delete(viewId)
           state.viewIndices.delete(viewId)
           if (state.activeViewId === viewId) {
             state.activeViewId = 'base'
           }
+
+          // Update layout
+          const newLayout = removePanelFromLayout(state.layout, viewId)
+          state.layout = newLayout || { viewId: 'base' } // Fallback to base view if layout becomes empty
         }
+      })
+    )
+  },
+
+  updateSplitPanel: (panelId: string, direction: SplitDirection, size: number) => {
+    set(
+      produce((state) => {
+        state.layout = updateSplitPanelInLayout(state.layout, panelId, direction, size)
       })
     )
   },
@@ -224,5 +341,7 @@ export const useNavigationStore = create<WorkspaceState>((set, get) => ({
     const currentIndex = viewIndices.get(viewId) || 0
     const stack = views.get(viewId) || []
     return currentIndex < stack.length - 1
-  }
+  },
+
+  setLayout: (layout) => set({ layout })
 }))

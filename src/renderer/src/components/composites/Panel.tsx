@@ -1,4 +1,5 @@
 import { Card } from '@/components/ui/card'
+import { SplitDirection } from '@devbookhq/splitter'
 import { LucideIcon } from 'lucide-react'
 import { ViewName } from '../../types/navigation'
 import { PanelTitleBar } from './panel-title-bar'
@@ -8,8 +9,8 @@ interface PanelProps {
   name: ViewName
   Icon: LucideIcon
   onActivate: (viewId: string) => void
-  onClose: (viewId: string) => void
-  onSplit: (viewId: string) => void
+  onClose: () => void
+  onSplit: (direction: SplitDirection) => void
   children: React.ReactNode
   isActive: boolean
 }
@@ -35,7 +36,6 @@ export function Panel({
       }}
     >
       <PanelTitleBar
-        viewId={viewId}
         name={name}
         Icon={Icon}
         onSplit={onSplit}

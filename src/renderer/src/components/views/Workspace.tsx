@@ -1,6 +1,7 @@
 import Splitter from '@devbookhq/splitter'
 import { ViewProvider } from '../../contexts/ViewContext'
 import { useWorkspace } from '../../contexts/WorkspaceContext'
+import { Layout } from '../../stores/workspace'
 import { ViewName } from '../../types/navigation'
 import { Panel } from '../composites/Panel'
 import { BrowserView } from './Browser'
@@ -15,36 +16,59 @@ const viewComponents: Record<ViewName, JSX.Element> = {
 const getViewComponent = (name: ViewName) => viewComponents[name] || viewComponents.home
 
 export function WorkspaceView() {
-  const { views, viewIndices, setActiveView, removeView, splitView, activeViewId } = useWorkspace()
+  const {
+    layout,
+    viewIndices,
+    activeViewId,
+    views,
+    setActiveView,
+    removeView,
+    splitView,
+    updateSplitPanel
+  } = useWorkspace()
 
-  return (
-    <div className="flex flex-col h-full">
-      <div className="flex-1 min-h-0">
-        <Splitter>
-          {Array.from(views.entries()).map(([viewId, stack]) => {
-            const currentIndex = viewIndices.get(viewId) || 0
-            const currentState = stack[currentIndex]
-            const name = currentState.name
-            const Icon = currentState.icon
+  const renderLayout = (layout: Layout): React.ReactNode => {
+    if ('viewId' in layout) {
+      return renderView(layout.viewId)
+    }
 
-            return (
-              <ViewProvider key={viewId} viewId={viewId}>
-                <Panel
-                  viewId={viewId}
-                  name={name}
-                  Icon={Icon}
-                  onActivate={setActiveView}
-                  onClose={removeView}
-                  onSplit={() => splitView(viewId, 'horizontal')}
-                  isActive={activeViewId === viewId}
-                >
-                  {getViewComponent(name)}
-                </Panel>
-              </ViewProvider>
-            )
-          })}
-        </Splitter>
-      </div>
-    </div>
-  )
+    return (
+      <Splitter
+        direction={layout.direction}
+        initialSizes={[layout.size, 100 - layout.size]}
+        onResizeFinished={(_pairIdx, newSizes) =>
+          updateSplitPanel(layout.id, layout.direction, newSizes[0])
+        }
+      >
+        {renderLayout(layout.panels[0])}
+        {renderLayout(layout.panels[1])}
+      </Splitter>
+    )
+  }
+
+  const renderView = (viewId: string) => {
+    const currentIndex = viewIndices.get(viewId) || 0
+    const stack = views.get(viewId) ?? []
+    const currentState = stack[currentIndex]
+    const name = currentState.name
+    const Icon = currentState.icon
+
+    return (
+      <ViewProvider key={viewId} viewId={viewId}>
+        <Panel
+          viewId={viewId}
+          name={name}
+          Icon={Icon}
+          onActivate={setActiveView}
+          onClose={() => removeView(viewId)}
+          onSplit={(direction) => splitView(viewId, direction)}
+          isActive={activeViewId === viewId}
+        >
+          {getViewComponent(name)}
+        </Panel>
+      </ViewProvider>
+    )
+  }
+
+  return <div className="flex flex-col h-full">{renderLayout(layout)}</div>
 }
