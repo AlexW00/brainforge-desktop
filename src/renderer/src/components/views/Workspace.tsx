@@ -55,17 +55,19 @@ export function WorkspaceView() {
 
     return (
       <ViewProvider key={viewId} viewId={viewId}>
-        <Panel
-          viewId={viewId}
-          name={name}
-          Icon={Icon}
-          onActivate={setActiveView}
-          onClose={() => removeView(viewId)}
-          onSplit={(direction) => splitView(viewId, direction)}
-          isActive={activeViewId === viewId}
-        >
-          {getViewComponent(name)}
-        </Panel>
+        <div className="flex flex-col h-full p-[5px]">
+          <Panel
+            viewId={viewId}
+            name={name}
+            Icon={Icon}
+            onActivate={setActiveView}
+            onClose={() => removeView(viewId)}
+            onSplit={(direction) => splitView(viewId, direction)}
+            isActive={activeViewId === viewId}
+          >
+            {getViewComponent(name)}
+          </Panel>
+        </div>
       </ViewProvider>
     )
   }

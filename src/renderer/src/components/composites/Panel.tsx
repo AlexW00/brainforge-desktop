@@ -27,7 +27,7 @@ export function Panel({
 }: PanelProps) {
   return (
     <Card
-      className="flex flex-col h-full m-[5px] p-[13px]"
+      className="flex flex-col h-full p-[13px]"
       onClick={() => onActivate(viewId)}
       style={{
         borderColor: 'hsl(var(--border))',
