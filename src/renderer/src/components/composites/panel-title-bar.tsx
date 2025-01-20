@@ -26,10 +26,10 @@ export function PanelTitleBar({ name, Icon, onSplit, onClose, isActive }: PanelT
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Alt') setIsAltPressed(true)
+      if (e.key === 'Alt' || e.key === 'Shift') setIsAltPressed(true)
     }
     const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.key === 'Alt') setIsAltPressed(false)
+      if (e.key === 'Alt' || e.key === 'Shift ') setIsAltPressed(false)
     }
 
     window.addEventListener('keydown', handleKeyDown)
