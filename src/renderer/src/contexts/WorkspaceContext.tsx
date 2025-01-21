@@ -3,7 +3,9 @@ import * as React from 'react'
 import type { WorkspaceState } from '../stores/workspace'
 import { useWorkspaceStore } from '../stores/workspace'
 
-export const WorkspaceContext = React.createContext<WorkspaceState | null>(null)
+export type WorkspaceContextType = WorkspaceState
+
+export const WorkspaceContext = React.createContext<WorkspaceContextType | null>(null)
 
 export function useWorkspace() {
   const context = React.useContext(WorkspaceContext)
