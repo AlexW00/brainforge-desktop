@@ -1,7 +1,7 @@
 import { SplitDirection } from '@devbookhq/splitter'
 import { enableMapSet, produce } from 'immer'
 import { create } from 'zustand'
-import { DEFAULT_VIEWS, ViewHistory, ViewName, ViewProps } from '../stock/Views'
+import { ViewHistory, ViewName, ViewProps } from '../stock/Views'
 
 enableMapSet()
 
@@ -21,8 +21,8 @@ export type Layout = Panel | SplitPanel
 export type WorkspaceState = {
   views: Map<string, ViewHistory> // viewId -> view history
   viewIndices: Map<string, number> // viewId -> current view index (= view history index)
-  activeViewId: string // currently active viewId
-  layout: Layout // the workspace layout
+  activeViewId: string | undefined // currently active viewId
+  layout: Layout | undefined // the workspace layout
 
   removeView: (viewId: string) => void
   navigate: <T extends ViewName>(viewId: string, view: T, props?: ViewProps[T]) => void
@@ -40,6 +40,7 @@ export type WorkspaceState = {
   setActiveView: (viewId: string) => void
   splitView: (viewId: string, direction: SplitDirection, splitView?: ViewHistory) => void
   updateSplitPanel: (panelId: string, direction: SplitDirection, size: number) => void
+  insertRootView: (view: ViewHistory) => void
 }
 
 const removePanelFromLayout = (layout: Layout, viewId: string): Layout | null => {
@@ -120,11 +121,20 @@ const splitPanelInLayout = (
 }
 
 export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
-  views: new Map([['base', [DEFAULT_VIEWS.get('home')!]]]),
-  viewIndices: new Map([['base', 0]]),
-  activeViewId: 'base',
-  layout: {
-    viewId: 'base' // Default to showing browser view
+  views: new Map(),
+  viewIndices: new Map(),
+  activeViewId: undefined,
+  layout: undefined,
+  insertRootView: (view: ViewHistory) => {
+    const newViewId = crypto.randomUUID()
+    set(
+      produce((state) => {
+        state.views.set(newViewId, view)
+        state.viewIndices.set(newViewId, 0)
+        state.activeViewId = newViewId
+        state.layout = { viewId: newViewId }
+      })
+    )
   },
   splitView: (viewId: string, direction: SplitDirection, splitView?: ViewHistory) => {
     const view = get().views.get(viewId)
@@ -151,22 +161,12 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   removeView: (viewId: string) => {
     set(
       produce((state) => {
-        if (state.views.size === 1 && viewId === 'base') {
-          // Reset to default state for base view
-          state.views.set('base', [DEFAULT_VIEWS.get('home')!])
-          state.viewIndices.set('base', 0)
-          state.layout = { viewId: 'base' }
-        } else {
-          state.views.delete(viewId)
-          state.viewIndices.delete(viewId)
-          if (state.activeViewId === viewId) {
-            state.activeViewId = 'base'
-          }
-
-          // Update layout
-          const newLayout = removePanelFromLayout(state.layout, viewId)
-          state.layout = newLayout || { viewId: 'base' } // Fallback to base view if layout becomes empty
+        state.views.delete(viewId)
+        state.viewIndices.delete(viewId)
+        if (state.activeViewId === viewId) {
+          state.activeViewId = undefined
         }
+        state.layout = removePanelFromLayout(state.layout, viewId)
       })
     )
   },

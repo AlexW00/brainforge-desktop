@@ -1,4 +1,5 @@
 import Splitter from '@devbookhq/splitter'
+import { useEffect } from 'react'
 import { ViewProvider } from '../../contexts/ViewContext'
 import { useWorkspace } from '../../contexts/WorkspaceContext'
 import { ViewIcons, ViewName } from '../../stock/Views'
@@ -10,7 +11,7 @@ import { NodeView } from './Node'
 const viewComponents: Record<ViewName, JSX.Element> = {
   browser: <BrowserView />,
   files: <NodeView />,
-  home: <div>Home Page</div>
+  home: <div></div>
 }
 
 const getViewComponent = (name: ViewName) => viewComponents[name] || viewComponents.home
@@ -24,8 +25,15 @@ export function WorkspaceView() {
     setActiveView,
     removeView,
     splitView,
-    updateSplitPanel
+    updateSplitPanel,
+    insertRootView
   } = useWorkspace()
+
+  useEffect(() => {
+    if (!activeViewId || !layout) {
+      insertRootView([{ name: 'home', props: {} }])
+    }
+  }, [activeViewId, layout, insertRootView])
 
   const renderLayout = (layout: Layout): React.ReactNode => {
     if ('viewId' in layout) {
@@ -72,5 +80,5 @@ export function WorkspaceView() {
     )
   }
 
-  return <div className="flex flex-col h-full">{renderLayout(layout)}</div>
+  return <div className="flex flex-col h-full">{layout ? renderLayout(layout) : null}</div>
 }
