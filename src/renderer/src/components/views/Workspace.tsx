@@ -8,15 +8,22 @@ import { Panel } from '../composites/Panel'
 import { BrowserView } from './Browser'
 import { NodeView } from './Node'
 
-const viewComponents: Record<ViewName, JSX.Element> = {
+const viewComponents = {
   browser: <BrowserView />,
   files: <NodeView />,
-  home: <div></div>
-}
+  home: <div />
+} as const
 
 type GutterPosition = 'left' | 'right' | 'top' | 'bottom'
 
-const getViewComponent = (name: ViewName) => viewComponents[name] || viewComponents.home
+const getPadding = (gutterPositions: GutterPosition[]) => {
+  const classes: string[] = []
+  !gutterPositions.includes('left') && classes.push('pl-[5px]')
+  !gutterPositions.includes('right') && classes.push('pr-[5px]')
+  !gutterPositions.includes('top') && classes.push('pt-[5px]')
+  !gutterPositions.includes('bottom') && classes.push('pb-[5px]')
+  return classes.join(' ')
+}
 
 export function WorkspaceView() {
   const {
@@ -37,64 +44,15 @@ export function WorkspaceView() {
     }
   }, [activeViewId, layout, insertRootView])
 
-  const renderLayout = (
-    layout: Layout,
-    parentGutterPositions: GutterPosition[] = []
-  ): React.ReactNode => {
-    if ('viewId' in layout) {
-      return renderView(layout.viewId, parentGutterPositions)
-    }
-
-    return (
-      <Splitter
-        gutterClassName={
-          layout.direction === 'Horizontal' ? 'custom-gutter-horizontal' : 'custom-gutter-vertical'
-        }
-        direction={layout.direction}
-        initialSizes={[layout.size, 100 - layout.size]}
-        onResizeFinished={(_pairIdx, newSizes) =>
-          updateSplitPanel(layout.id, layout.direction, newSizes[0])
-        }
-      >
-        {renderLayout(
-          layout.panels[0],
-          layout.direction === 'Horizontal'
-            ? [...parentGutterPositions, 'right']
-            : [...parentGutterPositions, 'bottom']
-        )}
-        {renderLayout(
-          layout.panels[1],
-          layout.direction === 'Horizontal'
-            ? [...parentGutterPositions, 'left']
-            : [...parentGutterPositions, 'top']
-        )}
-      </Splitter>
-    )
-  }
-
   const renderView = (viewId: string, gutterPositions: GutterPosition[]) => {
     const currentIndex = viewIndices.get(viewId) || 0
     const stack = views.get(viewId) ?? []
-    const currentState = stack[currentIndex]
-    const name = currentState.name
+    const { name } = stack[currentIndex]
     const Icon = ViewIcons[name]
-    let padding = ''
-    if (!gutterPositions.includes('left')) {
-      padding += ' pl-[5px]'
-    }
-    if (!gutterPositions.includes('right')) {
-      padding += ' pr-[5px]'
-    }
-    if (!gutterPositions.includes('top')) {
-      padding += ' pt-[5px]'
-    }
-    if (!gutterPositions.includes('bottom')) {
-      padding += ' pb-[5px]'
-    }
 
     return (
       <ViewProvider key={viewId} viewId={viewId}>
-        <div className={`flex flex-col h-full ${padding}`}>
+        <div className={`flex flex-col h-full ${getPadding(gutterPositions)}`}>
           <Panel
             viewId={viewId}
             name={name}
@@ -104,12 +62,40 @@ export function WorkspaceView() {
             onSplit={(direction) => splitView(viewId, direction)}
             isActive={activeViewId === viewId}
           >
-            {getViewComponent(name)}
+            {viewComponents[name as ViewName] || viewComponents.home}
           </Panel>
         </div>
       </ViewProvider>
     )
   }
 
-  return <div className="flex flex-col h-full">{layout ? renderLayout(layout) : null}</div>
+  const renderLayout = (
+    layout: Layout,
+    parentGutterPositions: GutterPosition[] = []
+  ): React.ReactNode => {
+    if ('viewId' in layout) {
+      return renderView(layout.viewId, parentGutterPositions)
+    }
+
+    const isHorizontal = layout.direction === 'Horizontal'
+    const gutterClass = isHorizontal ? 'custom-gutter-horizontal' : 'custom-gutter-vertical'
+    const getNextGutter = (panel: number): GutterPosition =>
+      isHorizontal ? (panel === 0 ? 'right' : 'left') : panel === 0 ? 'bottom' : 'top'
+
+    return (
+      <Splitter
+        gutterClassName={gutterClass}
+        direction={layout.direction}
+        initialSizes={[layout.size, 100 - layout.size]}
+        onResizeFinished={(_pairIdx, newSizes) =>
+          updateSplitPanel(layout.id, layout.direction, newSizes[0])
+        }
+      >
+        {renderLayout(layout.panels[0], [...parentGutterPositions, getNextGutter(0)])}
+        {renderLayout(layout.panels[1], [...parentGutterPositions, getNextGutter(1)])}
+      </Splitter>
+    )
+  }
+
+  return <div className="flex flex-col h-full">{layout && renderLayout(layout)}</div>
 }
