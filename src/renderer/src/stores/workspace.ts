@@ -21,8 +21,8 @@ export type Layout = Panel | SplitPanel
 export type WorkspaceState = {
   views: Map<string, ViewHistory> // viewId -> view history
   viewIndices: Map<string, number> // viewId -> current view index (= view history index)
-  activeViewId: string | undefined // currently active viewId
-  layout: Layout | undefined // the workspace layout
+  activeViewId?: string // currently active viewId
+  layout?: Layout // the workspace layout
 
   removeView: (viewId: string) => void
   navigate: <T extends ViewName>(viewId: string, view: T, props?: ViewProps[T]) => void
