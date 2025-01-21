@@ -38,6 +38,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         // Mouse back/forward buttons
         e.preventDefault()
         if (e.button === 3 && store.canGoBack(activeViewId)) {
+          console.log('goBack', activeViewId)
           store.goBack(activeViewId)
         } else if (e.button === 4 && store.canGoForward(activeViewId)) {
           store.goForward(activeViewId)

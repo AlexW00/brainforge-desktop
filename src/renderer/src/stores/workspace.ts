@@ -120,6 +120,30 @@ const splitPanelInLayout = (
   throw new Error('Invalid layout')
 }
 
+const getNeighborOfPanel = (layout: Layout, panelId: string): Layout | null => {
+  if ('viewId' in layout) {
+    return null
+  }
+
+  const [left, right] = layout.panels
+  if ('viewId' in left && left.viewId === panelId) {
+    return right
+  }
+  if ('viewId' in right && right.viewId === panelId) {
+    return left
+  }
+
+  return getNeighborOfPanel(left, panelId) || getNeighborOfPanel(right, panelId) || null
+}
+
+const findFirstPanel = (layout: Layout): Panel | null => {
+  if ('viewId' in layout) {
+    return layout
+  }
+  const [left, right] = layout.panels
+  return findFirstPanel(left) || findFirstPanel(right) || null
+}
+
 export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   views: new Map(),
   viewIndices: new Map(),
@@ -158,14 +182,23 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     )
   },
 
-  removeView: (viewId: string) => {
+  removeView: (viewId: string, newActiveViewId?: string) => {
     set(
       produce((state) => {
+        if (newActiveViewId) {
+          state.activeViewId = newActiveViewId
+        } else {
+          // by default, set active view to the panel next to the removed view
+          const neighbor = get().layout ? getNeighborOfPanel(get().layout!, viewId) : null
+          const firstPanel = neighbor ? findFirstPanel(neighbor) : null
+          if (firstPanel && state.activeViewId === viewId) {
+            state.activeViewId = firstPanel.viewId
+          }
+        }
+
+        // now, remove the view from the layout
         state.views.delete(viewId)
         state.viewIndices.delete(viewId)
-        if (state.activeViewId === viewId) {
-          state.activeViewId = undefined
-        }
         state.layout = removePanelFromLayout(state.layout, viewId)
       })
     )

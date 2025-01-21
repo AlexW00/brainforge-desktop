@@ -42,6 +42,7 @@ export function WorkspaceView() {
     if (!activeViewId || !layout) {
       insertRootView([{ name: 'home', props: {} }])
     }
+    console.log('layout:', JSON.stringify(layout, null, 2))
   }, [activeViewId, layout, insertRootView])
 
   const renderView = (viewId: string, gutterPositions: GutterPosition[]) => {
