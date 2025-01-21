@@ -65,3 +65,20 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+
+.custom-gutter-horizontal {
+  height: 100%;
+  width: 10px;
+}
+.custom-gutter-horizontal:hover {
+  cursor: col-resize;
+}
+
+.custom-gutter-vertical {
+  height: 10px;
+  width: 100%;
+}
+.custom-gutter-vertical:hover {
+  cursor: row-resize;
+}
