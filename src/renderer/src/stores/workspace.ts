@@ -12,6 +12,8 @@ export type View<T extends ViewName> = {
   icon: LucideIcon
 }
 
+export type ViewHistory = Array<View<ViewName>>
+
 export const DEFAULT_VIEWS = new Map<ViewName, View<ViewName>>([
   ['home', { name: 'home', props: {}, icon: Home }],
   ['files', { name: 'files', props: {}, icon: FolderOpen }],
@@ -26,18 +28,17 @@ export interface SplitPanel {
   id: string
   panels: [Layout, Layout]
   direction: SplitDirection
-  size: number // percentage between panels (e.g. 50 means equal split)
+  size: number // percentage between panels
 }
 
 export type Layout = Panel | SplitPanel
 
 export type WorkspaceState = {
-  views: Map<string, Array<View<ViewName>>>
-  viewIndices: Map<string, number>
-  activeViewId: string
-  layout: Layout
+  views: Map<string, ViewHistory> // viewId -> view history
+  viewIndices: Map<string, number> // viewId -> current view index (= view history index)
+  activeViewId: string // currently active viewId
+  layout: Layout // the workspace layout
 
-  addHomeView: () => void
   removeView: (viewId: string) => void
   navigate: <T extends ViewName>(viewId: string, view: T, props?: ViewProps[T]) => void
   setViewProps: <T extends ViewName>(viewId: string, props: ViewProps[T], canUndo?: boolean) => void
@@ -53,7 +54,6 @@ export type WorkspaceState = {
   goForward: (viewId: string) => void
   setActiveView: (viewId: string) => void
   splitView: (viewId: string, direction: SplitDirection) => void
-  setLayout: (layout: Layout) => void
   updateSplitPanel: (panelId: string, direction: SplitDirection, size: number) => void
 }
 
@@ -142,7 +142,6 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     viewId: 'base' // Default to showing browser view
   },
   splitView: (viewId: string, direction: SplitDirection) => {
-    console.log('splitView', viewId, direction)
     const view = get().views.get(viewId)
     if (!view) {
       console.error('Could not find view', viewId)
@@ -157,18 +156,6 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
         state.activeViewId = newViewId
         state.layout = splitPanelInLayout(state.layout, viewId, newViewId, direction)
         console.log('new layout', state.layout)
-      })
-    )
-  },
-
-  addHomeView: () => {
-    const viewId = crypto.randomUUID()
-    set(
-      produce((state) => {
-        state.views.set(viewId, [DEFAULT_VIEWS.get('home')!])
-        state.viewIndices.set(viewId, 0)
-        state.activeViewId = viewId
-        state.layout = { viewId }
       })
     )
   },
@@ -341,7 +328,5 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     const currentIndex = viewIndices.get(viewId) || 0
     const stack = views.get(viewId) || []
     return currentIndex < stack.length - 1
-  },
-
-  setLayout: (layout) => set({ layout })
+  }
 }))

@@ -3,27 +3,7 @@ import * as React from 'react'
 import type { WorkspaceState } from '../stores/workspace'
 import { useWorkspaceStore } from '../stores/workspace'
 
-type WorkspaceContextType = Pick<
-  WorkspaceState,
-  | 'setViewProps'
-  | 'setViewProp'
-  | 'navigate'
-  | 'goBack'
-  | 'goForward'
-  | 'canGoBack'
-  | 'canGoForward'
-  | 'activeViewId'
-  | 'views'
-  | 'viewIndices'
-  | 'addHomeView'
-  | 'removeView'
-  | 'setActiveView'
-  | 'splitView'
-  | 'layout'
-  | 'updateSplitPanel'
->
-
-export const WorkspaceContext = React.createContext<WorkspaceContextType | null>(null)
+export const WorkspaceContext = React.createContext<WorkspaceState | null>(null)
 
 export function useWorkspace() {
   const context = React.useContext(WorkspaceContext)
@@ -32,28 +12,13 @@ export function useWorkspace() {
   }
 
   return {
-    activeViewId: context.activeViewId,
-    views: context.views,
-    viewIndices: context.viewIndices,
-    layout: context.layout,
-    setViewProps: context.setViewProps,
-    setViewProp: context.setViewProp,
-    navigate: context.navigate,
-    goBack: context.goBack,
-    goForward: context.goForward,
-    canGoBack: context.canGoBack,
-    canGoForward: context.canGoForward,
-    addHomeView: context.addHomeView,
-    splitView: context.splitView,
-    updateSplitPanel: context.updateSplitPanel,
-    removeView: context.removeView,
-    setActiveView: context.setActiveView
+    ...context
   }
 }
 
 export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const store = useWorkspaceStore()
-  const activeViewId = store.activeViewId || 'view1'
+  const activeViewId = store.activeViewId || 'base'
 
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -89,22 +54,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
 
   const value = React.useMemo(() => {
     return {
-      views: store.views,
-      activeViewId: store.activeViewId,
-      viewIndices: store.viewIndices,
-      layout: store.layout,
-      setViewProps: store.setViewProps,
-      setViewProp: store.setViewProp,
-      navigate: store.navigate,
-      goBack: store.goBack,
-      goForward: store.goForward,
-      canGoBack: store.canGoBack,
-      canGoForward: store.canGoForward,
-      addHomeView: store.addHomeView,
-      splitView: store.splitView,
-      removeView: store.removeView,
-      setActiveView: store.setActiveView,
-      updateSplitPanel: store.updateSplitPanel
+      ...store
     }
   }, [store])
 
