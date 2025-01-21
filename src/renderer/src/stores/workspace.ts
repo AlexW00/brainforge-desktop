@@ -38,7 +38,7 @@ export type WorkspaceState = {
   goBack: (viewId: string) => void
   goForward: (viewId: string) => void
   setActiveView: (viewId: string) => void
-  splitView: (viewId: string, direction: SplitDirection) => void
+  splitView: (viewId: string, direction: SplitDirection, splitView?: ViewHistory) => void
   updateSplitPanel: (panelId: string, direction: SplitDirection, size: number) => void
 }
 
@@ -126,7 +126,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   layout: {
     viewId: 'base' // Default to showing browser view
   },
-  splitView: (viewId: string, direction: SplitDirection) => {
+  splitView: (viewId: string, direction: SplitDirection, splitView?: ViewHistory) => {
     const view = get().views.get(viewId)
     if (!view) {
       console.error('Could not find view', viewId)
@@ -134,13 +134,16 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     }
     const newViewId = crypto.randomUUID()
 
+    if (!splitView) {
+      splitView = view
+    }
+
     set(
       produce((state) => {
-        state.views.set(newViewId, view)
-        state.viewIndices.set(newViewId, view.length - 1)
+        state.views.set(newViewId, splitView)
+        state.viewIndices.set(newViewId, splitView.length - 1)
         state.activeViewId = newViewId
         state.layout = splitPanelInLayout(state.layout, viewId, newViewId, direction)
-        console.log('new layout', state.layout)
       })
     )
   },
