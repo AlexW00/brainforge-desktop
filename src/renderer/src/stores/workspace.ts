@@ -24,7 +24,7 @@ export type WorkspaceState = {
   activeViewId?: string // currently active viewId
   layout?: Layout // the workspace layout
 
-  removeView: (viewId: string) => void
+  removeView: (viewId: string, newActiveViewId?: string) => void
   navigate: <T extends ViewName>(viewId: string, view: T, props?: ViewProps[T]) => void
   setViewProps: <T extends ViewName>(viewId: string, props: ViewProps[T], canUndo?: boolean) => void
   setViewProp: <T extends ViewName, K extends keyof ViewProps[T]>(
