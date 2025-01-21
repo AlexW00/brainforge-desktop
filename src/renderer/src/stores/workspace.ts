@@ -1,24 +1,9 @@
 import { SplitDirection } from '@devbookhq/splitter'
 import { enableMapSet, produce } from 'immer'
-import { FolderOpen, Globe, Home, LucideIcon } from 'lucide-react'
 import { create } from 'zustand'
-import { ViewName, ViewProps } from '../types/navigation'
+import { DEFAULT_VIEWS, ViewHistory, ViewName, ViewProps } from '../stock/Views'
 
 enableMapSet()
-
-export type View<T extends ViewName> = {
-  name: T
-  props: ViewProps[T]
-  icon: LucideIcon
-}
-
-export type ViewHistory = Array<View<ViewName>>
-
-export const DEFAULT_VIEWS = new Map<ViewName, View<ViewName>>([
-  ['home', { name: 'home', props: {}, icon: Home }],
-  ['files', { name: 'files', props: {}, icon: FolderOpen }],
-  ['browser', { name: 'browser', props: {}, icon: Globe }]
-])
 
 export interface Panel {
   viewId: string
@@ -201,10 +186,9 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
       produce((state) => {
         const currentIndex = state.viewIndices.get(viewId) || 0
         const stack = state.views.get(viewId) || []
-        const icon = DEFAULT_VIEWS.get(view)?.icon || Home
 
         const newStack = stack.slice(0, currentIndex + 1)
-        newStack.push({ name: view, props, icon })
+        newStack.push({ name: view, props })
 
         state.views.set(viewId, newStack)
         state.viewIndices.set(viewId, newStack.length - 1)
@@ -226,8 +210,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
           const newStack = stack.slice(0, currentIndex + 1)
           newStack.push({
             name: currentView.name as T,
-            props: { ...props },
-            icon: currentView.icon
+            props: { ...props }
           })
           state.views.set(viewId, newStack)
           state.viewIndices.set(viewId, newStack.length - 1)
@@ -235,8 +218,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
           const newStack = [...stack]
           newStack[currentIndex] = {
             name: currentView.name as T,
-            props: { ...props },
-            icon: currentView.icon
+            props: { ...props }
           }
           state.views.set(viewId, newStack)
         }
@@ -266,8 +248,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
           const newStack = stack.slice(0, currentIndex + 1)
           newStack.push({
             name: currentView.name as T,
-            props: updatedProps,
-            icon: currentView.icon
+            props: updatedProps
           })
           state.views.set(viewId, newStack)
           state.viewIndices.set(viewId, newStack.length - 1)
@@ -275,8 +256,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
           const newStack = [...stack]
           newStack[currentIndex] = {
             name: currentView.name as T,
-            props: updatedProps,
-            icon: currentView.icon
+            props: updatedProps
           }
           state.views.set(viewId, newStack)
         }

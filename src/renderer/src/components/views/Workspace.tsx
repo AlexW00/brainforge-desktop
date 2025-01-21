@@ -1,8 +1,8 @@
 import Splitter from '@devbookhq/splitter'
 import { ViewProvider } from '../../contexts/ViewContext'
 import { useWorkspace } from '../../contexts/WorkspaceContext'
+import { ViewIcons, ViewName } from '../../stock/Views'
 import { Layout } from '../../stores/workspace'
-import { ViewName } from '../../types/navigation'
 import { Panel } from '../composites/Panel'
 import { BrowserView } from './Browser'
 import { NodeView } from './Node'
@@ -51,7 +51,7 @@ export function WorkspaceView() {
     const stack = views.get(viewId) ?? []
     const currentState = stack[currentIndex]
     const name = currentState.name
-    const Icon = currentState.icon
+    const Icon = ViewIcons[name]
 
     return (
       <ViewProvider key={viewId} viewId={viewId}>

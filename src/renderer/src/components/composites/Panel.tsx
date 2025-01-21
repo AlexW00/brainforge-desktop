@@ -1,7 +1,7 @@
 import { Card } from '@/components/ui/card'
 import { SplitDirection } from '@devbookhq/splitter'
 import { LucideIcon } from 'lucide-react'
-import { ViewName } from '../../types/navigation'
+import { ViewName } from '../../stock/Views'
 import { PanelTitleBar } from './panel-title-bar'
 
 interface PanelProps {

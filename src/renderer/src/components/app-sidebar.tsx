@@ -2,7 +2,7 @@ import { FolderOpen, Globe, LucideIcon } from 'lucide-react'
 
 import { useWorkspace } from '../contexts/WorkspaceContext'
 import { cn } from '../lib/utils'
-import { ViewName } from '../types/navigation'
+import { ViewName } from '../stock/Views'
 import { Button } from './ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip'
 

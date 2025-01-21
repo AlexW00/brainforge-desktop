@@ -9,7 +9,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useView } from '../../contexts/ViewContext'
-import { ViewName } from '../../types/navigation'
+import { ViewName } from '../../stock/Views'
 
 interface PanelTitleBarProps {
   name: ViewName
