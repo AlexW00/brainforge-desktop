@@ -179,6 +179,7 @@ const splitPanelInLayout = (
 ): Layout => {
   if ('viewId' in layout) {
     if (layout.viewId === splitViewId) {
+      console.log('splitPanelInLayout', { layout, splitViewId, insertViewId, direction, insertAt })
       return {
         id: crypto.randomUUID(),
         direction,
@@ -201,10 +202,14 @@ const splitPanelInLayout = (
       const newSizes = layout.sizes.map(
         (size) => size * (layout.panels.length / (layout.panels.length + 1))
       )
-      newSizes.splice(panelToSplitIndex + 1, 0, 100 / (layout.panels.length + 1))
+      newSizes.splice(
+        insertAt === 'before' ? panelToSplitIndex : panelToSplitIndex + 1,
+        0,
+        100 / (layout.panels.length + 1)
+      )
 
       const newPanels = [...layout.panels]
-      newPanels.splice(panelToSplitIndex + (insertAt === 'before' ? 0 : 1), 0, {
+      newPanels.splice(insertAt === 'before' ? panelToSplitIndex : panelToSplitIndex + 1, 0, {
         viewId: insertViewId
       })
 
@@ -218,7 +223,7 @@ const splitPanelInLayout = (
     return {
       ...layout,
       panels: layout.panels.map((panel) =>
-        splitPanelInLayout(panel, splitViewId, insertViewId, direction)
+        splitPanelInLayout(panel, splitViewId, insertViewId, direction, insertAt)
       )
     }
   }
@@ -273,7 +278,12 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
       })
     )
   },
-  splitView: (viewId: string, direction: SplitDirection, splitView?: ViewHistory) => {
+  splitView: (
+    viewId: string,
+    direction: SplitDirection,
+    splitView?: ViewHistory,
+    insertAt?: InsertAt
+  ) => {
     const view = get().views.get(viewId)
     if (!view) {
       console.error('Could not find view', viewId)
@@ -290,7 +300,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
         state.views.set(newViewId, splitView)
         state.viewIndices.set(newViewId, splitView.length - 1)
         state.activeViewId = newViewId
-        state.layout = splitPanelInLayout(state.layout, viewId, newViewId, direction)
+        state.layout = splitPanelInLayout(state.layout, viewId, newViewId, direction, insertAt)
       })
     )
   },

@@ -1,11 +1,12 @@
 import { SplitDirection } from '@devbookhq/splitter'
+import { useDraggable } from '@dnd-kit/core'
 import {
-    ArrowLeft,
-    ArrowRight,
-    LucideIcon,
-    SplitSquareHorizontal,
-    SplitSquareVertical,
-    X
+  ArrowLeft,
+  ArrowRight,
+  LucideIcon,
+  SplitSquareHorizontal,
+  SplitSquareVertical,
+  X
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useView } from '../../contexts/ViewContext'
@@ -14,15 +15,35 @@ import { ViewName } from '../../stock/Views'
 interface PanelTitleBarProps {
   name: ViewName
   Icon: LucideIcon
-  onSplit: (direction: SplitDirection) => void
+  onSplit: (direction: SplitDirection, insertAt?: 'before' | 'after') => void
   onClose: () => void
   isActive?: boolean
+  viewId: string
 }
 
-export function PanelTitleBar({ name, Icon, onSplit, onClose, isActive }: PanelTitleBarProps) {
+export function PanelTitleBar({
+  name,
+  Icon,
+  onSplit,
+  onClose,
+  isActive,
+  viewId
+}: PanelTitleBarProps) {
   const { canGoBack, canGoForward, goBack, goForward } = useView()
   const [isAltPressed, setIsAltPressed] = useState(false)
   const [isHoveringIcon, setIsHoveringIcon] = useState(false)
+
+  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+    id: viewId,
+    data: { viewId }
+  })
+
+  const style = transform
+    ? {
+        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+        cursor: 'grabbing'
+      }
+    : undefined
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -65,7 +86,13 @@ export function PanelTitleBar({ name, Icon, onSplit, onClose, isActive }: PanelT
           <ArrowRight className="h-4 w-4" />
         </button>
       </div>
-      <div className="text-sm font-medium flex items-center justify-center">
+      <div
+        ref={setNodeRef}
+        {...listeners}
+        {...attributes}
+        className="text-sm font-medium flex items-center justify-center"
+        style={style}
+      >
         <span
           className={`flex items-center gap-2 cursor-grab select-none px-2 ${isActive ? 'font-bold' : ''}`}
         >
@@ -78,7 +105,7 @@ export function PanelTitleBar({ name, Icon, onSplit, onClose, isActive }: PanelT
           onClick={(e) => {
             e.stopPropagation()
             onSplit(
-              isAltPressed && isHoveringIcon ? SplitDirection.Vertical : SplitDirection.Horizontal
+              isAltPressed && isHoveringIcon ? SplitDirection.Horizontal : SplitDirection.Vertical
             )
           }}
           onMouseEnter={() => setIsHoveringIcon(true)}

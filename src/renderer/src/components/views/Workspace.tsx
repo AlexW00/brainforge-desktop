@@ -1,4 +1,5 @@
-import Splitter from '@devbookhq/splitter'
+import Splitter, { SplitDirection } from '@devbookhq/splitter'
+import { DndContext, DragEndEvent } from '@dnd-kit/core'
 import { useEffect } from 'react'
 import { ViewProvider } from '../../contexts/ViewContext'
 import { useWorkspace } from '../../contexts/WorkspaceContext'
@@ -45,6 +46,23 @@ export function WorkspaceView() {
     console.log('layout:', JSON.stringify(layout, null, 2))
   }, [activeViewId, layout, insertRootView])
 
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over) return
+
+    const sourceViewId = active.data.current?.viewId
+    const { targetId, direction, insertAt } = over.data.current || {}
+    console.log('dragend:', { sourceViewId, targetId, direction, insertAt })
+
+    if (sourceViewId && targetId && sourceViewId !== targetId) {
+      const sourceView = views.get(sourceViewId)
+      if (sourceView) {
+        splitView(targetId, direction, sourceView, insertAt)
+        removeView(sourceViewId)
+      }
+    }
+  }
+
   const renderView = (viewId: string, gutterPositions: GutterPosition[]) => {
     const currentIndex = viewIndices.get(viewId) || 0
     const stack = views.get(viewId) ?? []
@@ -60,7 +78,7 @@ export function WorkspaceView() {
             Icon={Icon}
             onActivate={setActiveView}
             onClose={() => removeView(viewId)}
-            onSplit={(direction) => splitView(viewId, direction)}
+            onSplit={(direction, insertAt) => splitView(viewId, direction, undefined, insertAt)}
             isActive={activeViewId === viewId}
           >
             {viewComponents[name as ViewName] || viewComponents.home}
@@ -79,9 +97,9 @@ export function WorkspaceView() {
     }
 
     const isHorizontal = layout.direction === 'Horizontal'
-    const gutterClass = isHorizontal ? 'custom-gutter-horizontal' : 'custom-gutter-vertical'
+    const gutterClass = isHorizontal ? 'custom-gutter-vertical' : 'custom-gutter-horizontal'
     const getNextGutter = (panel: number, panelsLength: number): GutterPosition[] => {
-      if (isHorizontal) {
+      if (!isHorizontal) {
         if (panel === 0) return ['right']
         if (panel === panelsLength - 1) return ['left']
         return ['left', 'right']
@@ -96,7 +114,11 @@ export function WorkspaceView() {
       <Splitter
         key={layout.id}
         gutterClassName={gutterClass}
-        direction={layout.direction}
+        direction={
+          layout.direction === SplitDirection.Horizontal
+            ? SplitDirection.Vertical
+            : SplitDirection.Horizontal
+        }
         initialSizes={layout.sizes}
         onResizeFinished={(_pairIdx, newSizes) =>
           updateSplitPanel(layout.id, layout.direction, newSizes)
@@ -112,5 +134,9 @@ export function WorkspaceView() {
     )
   }
 
-  return <div className="flex flex-col h-full">{layout && renderLayout(layout)}</div>
+  return (
+    <DndContext onDragEnd={handleDragEnd}>
+      <div className="flex flex-col h-full">{layout && renderLayout(layout)}</div>
+    </DndContext>
+  )
 }
