@@ -80,11 +80,21 @@ export function WorkspaceView() {
 
     const isHorizontal = layout.direction === 'Horizontal'
     const gutterClass = isHorizontal ? 'custom-gutter-horizontal' : 'custom-gutter-vertical'
-    const getNextGutter = (panel: number): GutterPosition =>
-      isHorizontal ? (panel === 0 ? 'right' : 'left') : panel === 0 ? 'bottom' : 'top'
+    const getNextGutter = (panel: number, panelsLength: number): GutterPosition[] => {
+      if (isHorizontal) {
+        if (panel === 0) return ['right']
+        if (panel === panelsLength - 1) return ['left']
+        return ['left', 'right']
+      } else {
+        if (panel === 0) return ['bottom']
+        if (panel === panelsLength - 1) return ['top']
+        return ['top', 'bottom']
+      }
+    }
 
     return (
       <Splitter
+        key={layout.id}
         gutterClassName={gutterClass}
         direction={layout.direction}
         initialSizes={layout.sizes}
@@ -92,8 +102,12 @@ export function WorkspaceView() {
           updateSplitPanel(layout.id, layout.direction, newSizes)
         }
       >
-        {renderLayout(layout.panels[0], [...parentGutterPositions, getNextGutter(0)])}
-        {renderLayout(layout.panels[1], [...parentGutterPositions, getNextGutter(1)])}
+        {layout.panels.map((panel, index) =>
+          renderLayout(panel, [
+            ...parentGutterPositions,
+            ...getNextGutter(index, layout.panels.length)
+          ])
+        )}
       </Splitter>
     )
   }

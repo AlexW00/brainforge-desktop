@@ -43,22 +43,98 @@ export type WorkspaceState = {
   insertRootView: (view: ViewHistory) => void
 }
 
-const removePanelFromLayout = (layout: Layout, viewId: string): Layout | null => {
-  if ('viewId' in layout) {
-    return layout.viewId === viewId ? null : layout
-  }
+// Helper functions for panel layout management
+const normalizeSizes = (sizes: number[]): number[] => {
+  if (sizes.length === 0) return sizes
+  const total = sizes.reduce((sum, size) => sum + size, 0)
+  return sizes.map((size) => (size / total) * 100)
+}
 
-  const panels = layout.panels
-    .map((panel) => removePanelFromLayout(panel, viewId))
-    .filter((panel) => panel !== null)
+const removeItemAtIndex = <T>(array: T[], index: number): T[] => {
+  const newArray = [...array]
+  newArray.splice(index, 1)
+  return newArray
+}
 
+const findPanelIndex = (layout: SplitPanel, viewId: string): number => {
+  return layout.panels.findIndex((panel) => 'viewId' in panel && panel.viewId === viewId)
+}
+
+const handlePanelReduction = (panels: Layout[]): Layout | null => {
   if (panels.length === 0) return null
   if (panels.length === 1) return panels[0]
+  return null // Signal to keep existing structure
+}
 
-  return {
-    ...layout,
-    panels
+const removePanelFromLayout = (
+  layout: Layout,
+  viewId: string
+): { layout: Layout | null; removedIndex: number | null } => {
+  // Handle single view panel
+  if ('viewId' in layout) {
+    return {
+      layout: layout.viewId === viewId ? null : layout,
+      removedIndex: null
+    }
   }
+
+  // Handle split panel
+  const panelIndex = findPanelIndex(layout, viewId)
+
+  if (panelIndex !== -1) {
+    const newPanels = removeItemAtIndex(layout.panels, panelIndex)
+    const newSizes = normalizeSizes(removeItemAtIndex(layout.sizes, panelIndex))
+
+    const reducedLayout = handlePanelReduction(newPanels)
+    if (reducedLayout !== null) {
+      return { layout: reducedLayout, removedIndex: panelIndex }
+    }
+
+    return {
+      layout: {
+        ...layout,
+        panels: newPanels,
+        sizes: newSizes
+      },
+      removedIndex: panelIndex
+    }
+  }
+
+  // Recursively search nested panels
+  for (let i = 0; i < layout.panels.length; i++) {
+    const result = removePanelFromLayout(layout.panels[i], viewId)
+    if (result.layout !== layout.panels[i]) {
+      if (result.layout === null) {
+        const newPanels = removeItemAtIndex(layout.panels, i)
+        const newSizes = normalizeSizes(removeItemAtIndex(layout.sizes, i))
+        const reducedLayout = handlePanelReduction(newPanels)
+
+        return {
+          layout:
+            reducedLayout !== null
+              ? reducedLayout
+              : {
+                  ...layout,
+                  panels: newPanels,
+                  sizes: newSizes
+                },
+          removedIndex: result.removedIndex
+        }
+      }
+
+      const newPanels = [...layout.panels]
+      newPanels[i] = result.layout
+      return {
+        layout: {
+          ...layout,
+          panels: newPanels
+        },
+        removedIndex: result.removedIndex
+      }
+    }
+  }
+
+  return { layout, removedIndex: null }
 }
 
 const updateSplitPanelInLayout = (
@@ -94,7 +170,6 @@ const splitPanelInLayout = (
   direction: SplitDirection
 ): Layout => {
   if ('viewId' in layout) {
-    console.log('splitPanelInLayout', layout.viewId, splitViewId)
     if (layout.viewId === splitViewId) {
       return {
         id: crypto.randomUUID(),
@@ -102,19 +177,36 @@ const splitPanelInLayout = (
         sizes: [50, 50],
         panels: [layout, { viewId: insertViewId }]
       }
-    } else {
-      return layout
     }
+    return layout
   }
 
   if ('panels' in layout) {
+    const panelToSplitIndex = layout.panels.findIndex(
+      (panel) => 'viewId' in panel && panel.viewId === splitViewId
+    )
+
+    if (panelToSplitIndex !== -1 && layout.direction === direction) {
+      const newSizes = layout.sizes.map(
+        (size) => size * (layout.panels.length / (layout.panels.length + 1))
+      )
+      newSizes.splice(panelToSplitIndex + 1, 0, 100 / (layout.panels.length + 1))
+
+      const newPanels = [...layout.panels]
+      newPanels.splice(panelToSplitIndex + 1, 0, { viewId: insertViewId })
+
+      return {
+        ...layout,
+        sizes: newSizes,
+        panels: newPanels
+      }
+    }
+
     return {
       ...layout,
-      panels: [
-        ...layout.panels.map((panel) =>
-          splitPanelInLayout(panel, splitViewId, insertViewId, direction)
-        )
-      ]
+      panels: layout.panels.map((panel) =>
+        splitPanelInLayout(panel, splitViewId, insertViewId, direction)
+      )
     }
   }
 
@@ -126,15 +218,23 @@ const getNeighborOfPanel = (layout: Layout, panelId: string): Layout | null => {
     return null
   }
 
-  const [left, right] = layout.panels
-  if ('viewId' in left && left.viewId === panelId) {
-    return right
-  }
-  if ('viewId' in right && right.viewId === panelId) {
-    return left
+  // Find the index of the panel with the given ID
+  const panelIndex = layout.panels.findIndex(
+    (panel) => 'viewId' in panel && panel.viewId === panelId
+  )
+
+  if (panelIndex !== -1) {
+    // Try to get the next panel, if not available get the previous one
+    return layout.panels[panelIndex + 1] || layout.panels[panelIndex - 1] || null
   }
 
-  return getNeighborOfPanel(left, panelId) || getNeighborOfPanel(right, panelId) || null
+  // Recursively search in nested panels
+  for (const panel of layout.panels) {
+    const neighbor = getNeighborOfPanel(panel, panelId)
+    if (neighbor) return neighbor
+  }
+
+  return null
 }
 
 const findFirstPanel = (layout: Layout): Panel | null => {
@@ -197,9 +297,10 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
         }
 
         // now, remove the view from the layout
+        const result = removePanelFromLayout(state.layout!, viewId)
         state.views.delete(viewId)
         state.viewIndices.delete(viewId)
-        state.layout = removePanelFromLayout(state.layout, viewId)
+        state.layout = result.layout
       })
     )
   },
