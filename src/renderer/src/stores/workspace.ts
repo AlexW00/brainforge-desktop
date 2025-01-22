@@ -48,15 +48,16 @@ const removePanelFromLayout = (layout: Layout, viewId: string): Layout | null =>
     return layout.viewId === viewId ? null : layout
   }
 
-  const [left, right] = layout.panels.map((panel) => removePanelFromLayout(panel, viewId))
+  const panels = layout.panels
+    .map((panel) => removePanelFromLayout(panel, viewId))
+    .filter((panel) => panel !== null)
 
-  if (left === null && right === null) return null
-  if (left === null) return right
-  if (right === null) return left
+  if (panels.length === 0) return null
+  if (panels.length === 1) return panels[0]
 
   return {
     ...layout,
-    panels: [left, right]
+    panels
   }
 }
 
