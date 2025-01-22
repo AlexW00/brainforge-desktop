@@ -26,6 +26,17 @@ const getPadding = (gutterPositions: GutterPosition[]) => {
   return classes.join(' ')
 }
 
+/**
+ * Converts a split direction to a gutter direction (= the direction of the splitter)
+ * @param direction - the direction of the split
+ * @returns the direction of the gutter
+ */
+const splitDirectionToGutterDirection = (direction: SplitDirection) => {
+  return direction === SplitDirection.Horizontal
+    ? SplitDirection.Vertical
+    : SplitDirection.Horizontal
+}
+
 export function WorkspaceView() {
   const {
     layout,
@@ -99,14 +110,14 @@ export function WorkspaceView() {
     const isHorizontal = layout.direction === 'Horizontal'
     const gutterClass = isHorizontal ? 'custom-gutter-vertical' : 'custom-gutter-horizontal'
     const getNextGutter = (panel: number, panelsLength: number): GutterPosition[] => {
-      if (!isHorizontal) {
-        if (panel === 0) return ['right']
-        if (panel === panelsLength - 1) return ['left']
-        return ['left', 'right']
-      } else {
+      if (isHorizontal) {
         if (panel === 0) return ['bottom']
         if (panel === panelsLength - 1) return ['top']
         return ['top', 'bottom']
+      } else {
+        if (panel === 0) return ['right']
+        if (panel === panelsLength - 1) return ['left']
+        return ['left', 'right']
       }
     }
 
@@ -114,11 +125,7 @@ export function WorkspaceView() {
       <Splitter
         key={layout.id}
         gutterClassName={gutterClass}
-        direction={
-          layout.direction === SplitDirection.Horizontal
-            ? SplitDirection.Vertical
-            : SplitDirection.Horizontal
-        }
+        direction={splitDirectionToGutterDirection(layout.direction)}
         initialSizes={layout.sizes}
         onResizeFinished={(_pairIdx, newSizes) =>
           updateSplitPanel(layout.id, layout.direction, newSizes)
