@@ -87,9 +87,9 @@ export function WorkspaceView() {
       <Splitter
         gutterClassName={gutterClass}
         direction={layout.direction}
-        initialSizes={[layout.size, 100 - layout.size]}
+        initialSizes={layout.sizes}
         onResizeFinished={(_pairIdx, newSizes) =>
-          updateSplitPanel(layout.id, layout.direction, newSizes[0])
+          updateSplitPanel(layout.id, layout.direction, newSizes)
         }
       >
         {renderLayout(layout.panels[0], [...parentGutterPositions, getNextGutter(0)])}

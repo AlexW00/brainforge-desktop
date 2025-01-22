@@ -11,9 +11,9 @@ export interface Panel {
 
 export interface SplitPanel {
   id: string
-  panels: [Layout, Layout]
+  panels: Layout[]
   direction: SplitDirection
-  size: number // percentage between panels
+  sizes: number[] // percentage between panels
 }
 
 export type Layout = Panel | SplitPanel
@@ -39,7 +39,7 @@ export type WorkspaceState = {
   goForward: (viewId: string) => void
   setActiveView: (viewId: string) => void
   splitView: (viewId: string, direction: SplitDirection, splitView?: ViewHistory) => void
-  updateSplitPanel: (panelId: string, direction: SplitDirection, size: number) => void
+  updateSplitPanel: (panelId: string, direction: SplitDirection, sizes: number[]) => void
   insertRootView: (view: ViewHistory) => void
 }
 
@@ -64,22 +64,21 @@ const updateSplitPanelInLayout = (
   layout: Layout,
   panelId: string,
   direction: SplitDirection,
-  size: number
+  sizes: number[]
 ): Layout => {
   if ('panels' in layout) {
     if (layout.id === panelId) {
       return {
         ...layout,
         direction,
-        size
+        sizes
       }
     }
 
     return {
       ...layout,
       panels: [
-        updateSplitPanelInLayout(layout.panels[0], panelId, direction, size),
-        updateSplitPanelInLayout(layout.panels[1], panelId, direction, size)
+        ...layout.panels.map((panel) => updateSplitPanelInLayout(panel, panelId, direction, sizes))
       ]
     }
   }
@@ -99,7 +98,7 @@ const splitPanelInLayout = (
       return {
         id: crypto.randomUUID(),
         direction,
-        size: 50,
+        sizes: [50, 50],
         panels: [layout, { viewId: insertViewId }]
       }
     } else {
@@ -111,8 +110,9 @@ const splitPanelInLayout = (
     return {
       ...layout,
       panels: [
-        splitPanelInLayout(layout.panels[0], splitViewId, insertViewId, direction),
-        splitPanelInLayout(layout.panels[1], splitViewId, insertViewId, direction)
+        ...layout.panels.map((panel) =>
+          splitPanelInLayout(panel, splitViewId, insertViewId, direction)
+        )
       ]
     }
   }
@@ -140,8 +140,7 @@ const findFirstPanel = (layout: Layout): Panel | null => {
   if ('viewId' in layout) {
     return layout
   }
-  const [left, right] = layout.panels
-  return findFirstPanel(left) || findFirstPanel(right) || null
+  return layout.panels.map((panel) => findFirstPanel(panel)).find((panel) => panel !== null) || null
 }
 
 export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
@@ -204,10 +203,10 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     )
   },
 
-  updateSplitPanel: (panelId: string, direction: SplitDirection, size: number) => {
+  updateSplitPanel: (panelId: string, direction: SplitDirection, sizes: number[]) => {
     set(
       produce((state) => {
-        state.layout = updateSplitPanelInLayout(state.layout, panelId, direction, size)
+        state.layout = updateSplitPanelInLayout(state.layout, panelId, direction, sizes)
       })
     )
   },
