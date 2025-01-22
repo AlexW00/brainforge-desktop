@@ -1,11 +1,11 @@
 import { SplitDirection } from '@devbookhq/splitter'
 import {
-  ArrowLeft,
-  ArrowRight,
-  LucideIcon,
-  SplitSquareHorizontal,
-  SplitSquareVertical,
-  X
+    ArrowLeft,
+    ArrowRight,
+    LucideIcon,
+    SplitSquareHorizontal,
+    SplitSquareVertical,
+    X
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useView } from '../../contexts/ViewContext'

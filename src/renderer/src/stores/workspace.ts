@@ -18,6 +18,8 @@ export interface SplitPanel {
 
 export type Layout = Panel | SplitPanel
 
+export type InsertAt = 'before' | 'after'
+
 export type WorkspaceState = {
   views: Map<string, ViewHistory> // viewId -> view history
   viewIndices: Map<string, number> // viewId -> current view index (= view history index)
@@ -38,7 +40,12 @@ export type WorkspaceState = {
   goBack: (viewId: string) => void
   goForward: (viewId: string) => void
   setActiveView: (viewId: string) => void
-  splitView: (viewId: string, direction: SplitDirection, splitView?: ViewHistory) => void
+  splitView: (
+    viewId: string,
+    direction: SplitDirection,
+    splitView?: ViewHistory,
+    insertAt?: InsertAt
+  ) => void
   updateSplitPanel: (panelId: string, direction: SplitDirection, sizes: number[]) => void
   insertRootView: (view: ViewHistory) => void
 }
@@ -167,7 +174,8 @@ const splitPanelInLayout = (
   layout: Layout,
   splitViewId: string,
   insertViewId: string,
-  direction: SplitDirection
+  direction: SplitDirection,
+  insertAt: InsertAt = 'after'
 ): Layout => {
   if ('viewId' in layout) {
     if (layout.viewId === splitViewId) {
@@ -175,7 +183,10 @@ const splitPanelInLayout = (
         id: crypto.randomUUID(),
         direction,
         sizes: [50, 50],
-        panels: [layout, { viewId: insertViewId }]
+        panels:
+          insertAt === 'before'
+            ? [{ viewId: insertViewId }, layout]
+            : [layout, { viewId: insertViewId }]
       }
     }
     return layout
@@ -193,7 +204,9 @@ const splitPanelInLayout = (
       newSizes.splice(panelToSplitIndex + 1, 0, 100 / (layout.panels.length + 1))
 
       const newPanels = [...layout.panels]
-      newPanels.splice(panelToSplitIndex + 1, 0, { viewId: insertViewId })
+      newPanels.splice(panelToSplitIndex + (insertAt === 'before' ? 0 : 1), 0, {
+        viewId: insertViewId
+      })
 
       return {
         ...layout,
