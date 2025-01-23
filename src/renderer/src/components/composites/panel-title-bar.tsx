@@ -1,17 +1,19 @@
 import { SplitDirection } from '@devbookhq/splitter'
+import { useDraggable } from '@dnd-kit/core'
 import {
-    ArrowLeft,
-    ArrowRight,
-    LucideIcon,
-    SplitSquareHorizontal,
-    SplitSquareVertical,
-    X
+  ArrowLeft,
+  ArrowRight,
+  LucideIcon,
+  SplitSquareHorizontal,
+  SplitSquareVertical,
+  X
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useView } from '../../contexts/ViewContext'
 import { ViewName } from '../../stock/Views'
 
 interface PanelTitleBarProps {
+  viewId: string
   name: ViewName
   Icon: LucideIcon
   onSplit: (direction: SplitDirection) => void
@@ -19,10 +21,20 @@ interface PanelTitleBarProps {
   isActive?: boolean
 }
 
-export function PanelTitleBar({ name, Icon, onSplit, onClose, isActive }: PanelTitleBarProps) {
+export function PanelTitleBar({
+  viewId,
+  name,
+  Icon,
+  onSplit,
+  onClose,
+  isActive
+}: PanelTitleBarProps) {
   const { canGoBack, canGoForward, goBack, goForward } = useView()
   const [isAltPressed, setIsAltPressed] = useState(false)
   const [isHoveringIcon, setIsHoveringIcon] = useState(false)
+  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+    id: viewId
+  })
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -67,7 +79,13 @@ export function PanelTitleBar({ name, Icon, onSplit, onClose, isActive }: PanelT
       </div>
       <div className="text-sm font-medium flex items-center justify-center">
         <span
+          ref={setNodeRef}
+          {...listeners}
+          {...attributes}
           className={`flex items-center gap-2 cursor-grab select-none px-2 ${isActive ? 'font-bold' : ''}`}
+          style={{
+            transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined
+          }}
         >
           <Icon className="h-4 w-4" />
           {name.charAt(0).toUpperCase() + name.slice(1)}
