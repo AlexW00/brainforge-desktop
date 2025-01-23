@@ -41,7 +41,7 @@ export function PanelTitleBar({
       if (e.key === 'Alt' || e.key === 'Shift') setIsAltPressed(true)
     }
     const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.key === 'Alt' || e.key === 'Shift ') setIsAltPressed(false)
+      if (e.key === 'Alt' || e.key === 'Shift') setIsAltPressed(false)
     }
 
     window.addEventListener('keydown', handleKeyDown)
