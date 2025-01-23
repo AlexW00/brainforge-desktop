@@ -49,6 +49,11 @@ export function WorkspaceView() {
     }
   }, [activeViewId, layout, insertRootView])
 
+  const resetDrag = () => {
+    setDraggedViewId(undefined)
+    setActiveDropId(undefined)
+  }
+
   const handleDragStart = ({ active }: DragStartEvent) => {
     setDraggedViewId(active.id as string)
   }
@@ -59,15 +64,13 @@ export function WorkspaceView() {
 
   const handleDragEnd = ({ over }: DragEndEvent) => {
     if (!over || !draggedViewId) {
-      setDraggedViewId(undefined)
-      setActiveDropId(undefined)
+      resetDrag()
       return
     }
 
     const [targetViewId, position] = (over.id as string).split(':')
     if (targetViewId === draggedViewId) {
-      setDraggedViewId(undefined)
-      setActiveDropId(undefined)
+      resetDrag()
       return
     }
 
@@ -77,18 +80,12 @@ export function WorkspaceView() {
         : SplitDirection.Vertical
     const insertAt = position === 'left' || position === 'top' ? 'before' : 'after'
 
-    // Get the dragged view's history
     const draggedViewHistory = views.get(draggedViewId)
     if (!draggedViewHistory) return
 
-    // Split the target view and insert the dragged view
     splitView(targetViewId, direction, draggedViewHistory, insertAt)
-
-    // Remove the original dragged view
     removeView(draggedViewId)
-
-    setDraggedViewId(undefined)
-    setActiveDropId(undefined)
+    resetDrag()
   }
 
   const renderView = (viewId: string, gutterPositions: GutterPosition[]) => {
@@ -161,7 +158,6 @@ export function WorkspaceView() {
     )
   }
 
-  // Get the dragged view's name and icon for the overlay
   const draggedView = draggedViewId
     ? views.get(draggedViewId)?.[viewIndices.get(draggedViewId) || 0]
     : undefined
