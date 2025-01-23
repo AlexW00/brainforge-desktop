@@ -143,6 +143,8 @@ export function WorkspaceView() {
         key={layout.id}
         gutterClassName={gutterClass}
         direction={layout.direction}
+        minHeights={layout.sizes.map(() => 200)}
+        minWidths={layout.sizes.map(() => 200)}
         initialSizes={layout.sizes}
         onResizeFinished={(_pairIdx, newSizes) =>
           updateSplitPanel(layout.id, layout.direction, newSizes)
