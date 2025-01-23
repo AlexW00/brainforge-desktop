@@ -197,7 +197,6 @@ const splitPanelInLayout = (
       (panel) => 'viewId' in panel && panel.viewId === splitViewId
     )
 
-    console.log('old panels', layout.panels)
     if (panelToSplitIndex !== -1 && layout.direction === direction) {
       const newSizes = layout.sizes.map(
         (size) => size * (layout.panels.length / (layout.panels.length + 1))
@@ -208,7 +207,6 @@ const splitPanelInLayout = (
       newPanels.splice(panelToSplitIndex + (insertAt === 'before' ? 0 : 1), 0, {
         viewId: insertViewId
       })
-      console.log('New panels', newPanels)
 
       return {
         ...layout,
@@ -275,10 +273,14 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
       })
     )
   },
-  splitView: (viewId: string, direction: SplitDirection, splitView?: ViewHistory) => {
+  splitView: (
+    viewId: string,
+    direction: SplitDirection,
+    splitView?: ViewHistory,
+    insertAt?: InsertAt
+  ) => {
     const view = get().views.get(viewId)
     if (!view) {
-      console.error('Could not find view', viewId)
       return
     }
     const newViewId = crypto.randomUUID()
@@ -292,7 +294,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
         state.views.set(newViewId, splitView)
         state.viewIndices.set(newViewId, splitView.length - 1)
         state.activeViewId = newViewId
-        state.layout = splitPanelInLayout(state.layout, viewId, newViewId, direction)
+        state.layout = splitPanelInLayout(state.layout, viewId, newViewId, direction, insertAt)
       })
     )
   },
@@ -333,7 +335,6 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     view: T,
     props: ViewProps[T] = {} as ViewProps[T]
   ) => {
-    console.log('navigate', viewId, view, props)
     set(
       produce((state) => {
         const currentIndex = state.viewIndices.get(viewId) || 0
@@ -384,7 +385,6 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     value: ViewProps[T][K],
     canUndo = false
   ) => {
-    console.log('setViewProp', viewId, key, value, canUndo)
     const { views, viewIndices } = get()
     const currentIndex = viewIndices.get(viewId) || 0
     const stack = views.get(viewId) || []
