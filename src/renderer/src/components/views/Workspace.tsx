@@ -70,12 +70,14 @@ export function WorkspaceView() {
   }
 
   const handleDragEnd = ({ over }: DragEndEvent) => {
+    console.log('Drag end', over, draggedViewId)
     if (!over || !draggedViewId) {
       resetDrag()
       return
     }
 
     const [targetViewId, position] = (over.id as string).split(':')
+    console.log('Target view id', targetViewId, draggedViewId)
     if (targetViewId === draggedViewId) {
       resetDrag()
       return
@@ -83,12 +85,16 @@ export function WorkspaceView() {
 
     const direction =
       position === 'left' || position === 'right'
-        ? SplitDirection.Horizontal
-        : SplitDirection.Vertical
+        ? SplitDirection.Vertical
+        : SplitDirection.Horizontal
     const insertAt = position === 'left' || position === 'top' ? 'before' : 'after'
+
+    console.log('Drag end', targetViewId, direction, insertAt)
 
     const draggedViewHistory = views.get(draggedViewId)
     if (!draggedViewHistory) return
+
+    console.log('Split view', targetViewId, direction, insertAt)
 
     splitView(targetViewId, direction, draggedViewHistory, insertAt)
     removeView(draggedViewId)
@@ -146,6 +152,7 @@ export function WorkspaceView() {
         return ['top', 'bottom']
       }
     }
+    console.log('Render layout', layout.panels)
 
     return (
       <Splitter

@@ -197,6 +197,7 @@ const splitPanelInLayout = (
       (panel) => 'viewId' in panel && panel.viewId === splitViewId
     )
 
+    console.log('old panels', layout.panels)
     if (panelToSplitIndex !== -1 && layout.direction === direction) {
       const newSizes = layout.sizes.map(
         (size) => size * (layout.panels.length / (layout.panels.length + 1))
@@ -207,6 +208,7 @@ const splitPanelInLayout = (
       newPanels.splice(panelToSplitIndex + (insertAt === 'before' ? 0 : 1), 0, {
         viewId: insertViewId
       })
+      console.log('New panels', newPanels)
 
       return {
         ...layout,
