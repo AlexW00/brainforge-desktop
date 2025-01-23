@@ -19,6 +19,8 @@ interface PanelTitleBarProps {
   onSplit: (direction: SplitDirection) => void
   onClose: () => void
   isActive?: boolean
+  canSplitVertical?: boolean
+  canSplitHorizontal?: boolean
 }
 
 export function PanelTitleBar({
@@ -27,7 +29,9 @@ export function PanelTitleBar({
   Icon,
   onSplit,
   onClose,
-  isActive
+  isActive,
+  canSplitVertical,
+  canSplitHorizontal
 }: PanelTitleBarProps) {
   const { canGoBack, canGoForward, goBack, goForward } = useView()
   const [isAltPressed, setIsAltPressed] = useState(false)
@@ -95,19 +99,23 @@ export function PanelTitleBar({
         <button
           onClick={(e) => {
             e.stopPropagation()
-            onSplit(
-              isAltPressed && isHoveringIcon ? SplitDirection.Vertical : SplitDirection.Horizontal
-            )
+            const splitDirection =
+              isAltPressed && isHoveringIcon ? SplitDirection.Horizontal : SplitDirection.Vertical
+            if (splitDirection === SplitDirection.Horizontal && canSplitHorizontal) {
+              onSplit(SplitDirection.Horizontal)
+            } else if (splitDirection === SplitDirection.Vertical && canSplitVertical) {
+              onSplit(SplitDirection.Vertical)
+            }
           }}
           onMouseEnter={() => setIsHoveringIcon(true)}
           onMouseLeave={() => setIsHoveringIcon(false)}
           className="hover:bg-muted rounded p-1"
         >
           <SplitSquareHorizontal
-            className={`h-4 w-4 ${isAltPressed && isHoveringIcon ? 'hidden' : 'block'}`}
+            className={`h-4 w-4 ${isAltPressed && isHoveringIcon ? 'hidden' : 'block'} ${!canSplitVertical ? 'opacity-50' : ''}`}
           />
           <SplitSquareVertical
-            className={`h-4 w-4 ${isAltPressed && isHoveringIcon ? 'block' : 'hidden'}`}
+            className={`h-4 w-4 ${isAltPressed && isHoveringIcon ? 'block' : 'hidden'} ${!canSplitHorizontal ? 'opacity-50' : ''}`}
           />
         </button>
         <button
