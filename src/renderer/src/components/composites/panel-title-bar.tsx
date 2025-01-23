@@ -4,13 +4,19 @@ import {
   ArrowLeft,
   ArrowRight,
   LucideIcon,
+  MoreVertical,
   SplitSquareHorizontal,
   SplitSquareVertical,
   X
 } from 'lucide-react'
-import { useEffect, useState } from 'react'
 import { useView } from '../../contexts/ViewContext'
 import { ViewName } from '../../stock/Views'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '../ui/dropdown-menu'
 
 interface PanelTitleBarProps {
   viewId: string
@@ -34,28 +40,9 @@ export function PanelTitleBar({
   canSplitHorizontal
 }: PanelTitleBarProps) {
   const { canGoBack, canGoForward, goBack, goForward } = useView()
-  const [isAltPressed, setIsAltPressed] = useState(false)
-  const [isHoveringIcon, setIsHoveringIcon] = useState(false)
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: viewId
   })
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Alt' || e.key === 'Shift') setIsAltPressed(true)
-    }
-    const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.key === 'Alt' || e.key === 'Shift') setIsAltPressed(false)
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    window.addEventListener('keyup', handleKeyUp)
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-      window.removeEventListener('keyup', handleKeyUp)
-    }
-  }, [])
 
   return (
     <div className="grid grid-cols-3 items-center mb-2 h-6">
@@ -99,25 +86,33 @@ export function PanelTitleBar({
         <button
           onClick={(e) => {
             e.stopPropagation()
-            const splitDirection =
-              isAltPressed && isHoveringIcon ? SplitDirection.Horizontal : SplitDirection.Vertical
-            if (splitDirection === SplitDirection.Horizontal && canSplitHorizontal) {
-              onSplit(SplitDirection.Horizontal)
-            } else if (splitDirection === SplitDirection.Vertical && canSplitVertical) {
-              onSplit(SplitDirection.Vertical)
-            }
+            onSplit(SplitDirection.Vertical)
           }}
-          onMouseEnter={() => setIsHoveringIcon(true)}
-          onMouseLeave={() => setIsHoveringIcon(false)}
-          className="hover:bg-muted rounded p-1"
+          disabled={!canSplitVertical}
+          className="hover:bg-muted rounded p-1 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <SplitSquareHorizontal
-            className={`h-4 w-4 ${isAltPressed && isHoveringIcon ? 'hidden' : 'block'} ${!canSplitVertical ? 'opacity-50' : ''}`}
-          />
-          <SplitSquareVertical
-            className={`h-4 w-4 ${isAltPressed && isHoveringIcon ? 'block' : 'hidden'} ${!canSplitHorizontal ? 'opacity-50' : ''}`}
-          />
+          <SplitSquareHorizontal className="h-4 w-4" />
         </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="hover:bg-muted rounded p-1">
+              <MoreVertical className="h-4 w-4" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation()
+                onSplit(SplitDirection.Horizontal)
+              }}
+              disabled={!canSplitHorizontal}
+              className="gap-2"
+            >
+              <SplitSquareVertical className="h-4 w-4" />
+              Split Horizontally
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <button
           onClick={(e) => {
             e.stopPropagation()
