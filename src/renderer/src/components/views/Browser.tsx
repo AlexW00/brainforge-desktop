@@ -13,10 +13,24 @@ export function BrowserView() {
   const { view, setViewProp, goBack, goForward } = useView<'browser'>()
   const webviewRef = useRef<Electron.WebviewTag>(null)
   const [scanElement, setScanElement] = useState<ScanElement | null>(null)
+  const [isMouseDown, setIsMouseDown] = useState(false)
 
   useEffect(() => {
     if (!view.props.url) {
       setViewProp('url', 'https://google.com', false)
+    }
+  }, [])
+
+  useEffect(() => {
+    const handleMouseDown = () => setIsMouseDown(true)
+    const handleMouseUp = () => setIsMouseDown(false)
+
+    document.addEventListener('mousedown', handleMouseDown)
+    document.addEventListener('mouseup', handleMouseUp)
+
+    return () => {
+      document.removeEventListener('mousedown', handleMouseDown)
+      document.removeEventListener('mouseup', handleMouseUp)
     }
   }, [])
 
@@ -68,7 +82,12 @@ export function BrowserView() {
         onNavigate={(url) => setViewProp('url', url, true)}
         onRefresh={() => webviewRef.current?.reload()}
       />
-      <webview ref={webviewRef} src={view.props.url} className="flex-1" />
+      <webview
+        ref={webviewRef}
+        src={view.props.url}
+        className="flex-1"
+        style={{ pointerEvents: isMouseDown ? 'none' : 'auto' }}
+      />
     </div>
   )
 }
