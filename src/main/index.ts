@@ -3,7 +3,7 @@ import type { FSWatcher } from 'chokidar'
 import chokidar from 'chokidar'
 import { app, BrowserWindow, ipcMain } from 'electron'
 import { lookup } from 'mime-types'
-import { readdir, stat } from 'node:fs/promises'
+import { readdir, readFile, stat } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { v4 as uuidv4 } from 'uuid'
@@ -128,6 +128,11 @@ app.whenReady().then(() => {
       isFile: stats.isFile(),
       mtime: stats.mtime.getTime()
     }
+  })
+
+  ipcMain.handle('getFileContent', async (_, path: string) => {
+    const content = await readFile(path, 'utf-8')
+    return content
   })
 
   createWindow()

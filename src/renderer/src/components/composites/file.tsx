@@ -1,18 +1,32 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { FileSystemNode } from '../../../../types/files'
 
 interface EditorComponentProps {
   path: string
-  mimeType: string
 }
 
-function EditorComponent({ path, mimeType }: EditorComponentProps) {
+function EditorComponent({ path }: EditorComponentProps) {
+  const [content, setContent] = useState<string>('')
+  const [error, setError] = useState<string>('')
+
+  useEffect(() => {
+    window.api
+      .getFileContent(path)
+      .then(setContent)
+      .catch((err) => setError(err.message))
+  }, [path])
+
+  if (error) {
+    return (
+      <div className="flex-1 overflow-auto flex items-center justify-center text-destructive">
+        Error loading file: {error}
+      </div>
+    )
+  }
+
   return (
     <div className="flex-1 overflow-auto">
-      {/* TODO: Implement text editor */}
-      <pre className="p-4">
-        Text editor for {path} ({mimeType})
-      </pre>
+      <pre className="p-4">{content}</pre>
     </div>
   )
 }
@@ -58,7 +72,7 @@ export function FileComponent({ node }: FileComponentProps) {
   }
 
   if (isText) {
-    return <EditorComponent path={node.path} mimeType={node.mimeType} />
+    return <EditorComponent path={node.path} />
   }
 
   return (

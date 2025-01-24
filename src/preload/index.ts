@@ -7,6 +7,7 @@ const api = {
   readDir: (path: string) => ipcRenderer.invoke('readDir', path),
   joinPath: (...paths: string[]) => ipcRenderer.invoke('joinPath', ...paths),
   getStats: (path: string) => ipcRenderer.invoke('getStats', path),
+  getFileContent: (path: string) => ipcRenderer.invoke('getFileContent', path),
   watchFiles: async (path: string, options: FileWatcherOptions): Promise<FileWatcher> => {
     const watcherId = await ipcRenderer.invoke('watchFiles', path)
 
