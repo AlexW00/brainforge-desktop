@@ -33,6 +33,7 @@ export interface FileSystemAPI {
   getStats: (path: string) => Promise<FileStats>
   getFileContent: (path: string) => Promise<string>
   readFile: (path: string) => Promise<string>
+  writeFile: (path: string, content: string) => Promise<void>
 }
 
 export interface Node {

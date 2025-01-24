@@ -3,7 +3,7 @@ import type { FSWatcher } from 'chokidar'
 import chokidar from 'chokidar'
 import { app, BrowserWindow, ipcMain } from 'electron'
 import mime, { lookup } from 'mime-types'
-import { readdir, readFile, stat } from 'node:fs/promises'
+import { readdir, readFile, stat, writeFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { v4 as uuidv4 } from 'uuid'
@@ -134,6 +134,10 @@ app.whenReady().then(() => {
     const buffer = await readFile(path)
     const mimeType = mime.lookup(path) || 'application/octet-stream'
     return `data:${mimeType};base64,${buffer.toString('base64')}`
+  })
+
+  ipcMain.handle('writeFile', async (_, path: string, content: string) => {
+    await writeFile(path, content)
   })
 
   createWindow()
