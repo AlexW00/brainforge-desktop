@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useFileCache } from '../../contexts/FileCacheContext'
 import { useView } from '../../contexts/ViewContext'
 import { DirectoryComponent } from '../composites/directory'
+import { FileComponent } from '../composites/file'
 import { PathBreadcrumbs } from '../composites/path-breadcrumbs'
 
 export function NodeView() {
@@ -27,10 +28,8 @@ export function NodeView() {
   const showParentFolder = currentNode !== null && currentNode.path !== currentPath
 
   const handleItemClick = async (item: { type: string; name: string }) => {
-    if (item.type === 'folder') {
-      const newPath = await window.api.joinPath(currentPath, item.name)
-      navigate('files', { path: newPath })
-    }
+    const newPath = await window.api.joinPath(currentPath, item.name)
+    navigate('files', { path: newPath })
   }
 
   const handleParentClick = async () => {
@@ -52,6 +51,8 @@ export function NodeView() {
         <div className="flex flex-1 items-center justify-center text-muted-foreground">
           This file or directory does not exist
         </div>
+      ) : currentNode?.type === 'file' ? (
+        <FileComponent node={currentNode} />
       ) : (
         <DirectoryComponent
           items={files.map((node) => ({
