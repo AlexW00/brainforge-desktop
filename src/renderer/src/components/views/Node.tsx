@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useFileCache } from '../../contexts/FileCacheContext'
 import { useView } from '../../contexts/ViewContext'
-import { DirectoryComponent } from '../composites/file-table'
+import { DirectoryComponent } from '../composites/directory'
 import { PathBreadcrumbs } from '../composites/path-breadcrumbs'
 
 export function NodeView() {
