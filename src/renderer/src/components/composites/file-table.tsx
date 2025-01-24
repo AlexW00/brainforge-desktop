@@ -1,7 +1,7 @@
 import { FileIcon, FolderIcon } from 'lucide-react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table'
 
-export interface FileTableRow {
+export interface DirectoryTableRow {
   name: string
   type: 'file' | 'folder'
   path: string
@@ -9,21 +9,21 @@ export interface FileTableRow {
   modified?: string
 }
 
-interface FileGridProps {
-  items: FileTableRow[]
+interface DirectoryComponentProps {
+  items: DirectoryTableRow[]
   showParentFolder?: boolean
-  onItemClick: (item: FileTableRow) => Promise<void> | void
+  onItemClick: (item: DirectoryTableRow) => Promise<void> | void
   onParentClick: () => Promise<void> | void
   isLoading?: boolean
 }
 
-export function FileTable({
+export function DirectoryComponent({
   items,
   showParentFolder,
   onItemClick,
   onParentClick,
   isLoading
-}: FileGridProps) {
+}: DirectoryComponentProps) {
   return (
     <div className="flex-1 overflow-auto">
       <Table>

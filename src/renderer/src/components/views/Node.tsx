@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useFileCache } from '../../contexts/FileCacheContext'
 import { useView } from '../../contexts/ViewContext'
-import { FileTable } from '../composites/file-table'
+import { DirectoryComponent } from '../composites/file-table'
 import { PathBreadcrumbs } from '../composites/path-breadcrumbs'
 
 export function NodeView() {
@@ -53,7 +53,7 @@ export function NodeView() {
           This file or directory does not exist
         </div>
       ) : (
-        <FileTable
+        <DirectoryComponent
           items={files.map((node) => ({
             name: node.path.split('/').pop()!,
             path: node.path,
