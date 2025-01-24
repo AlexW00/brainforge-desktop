@@ -7,11 +7,18 @@ interface EditorComponentProps {
   lastUpdated: number
 }
 
+// Function to strip YAML frontmatter from markdown content
+const stripYamlFrontmatter = (content: string): string => {
+  const match = content.match(/^---\n[\s\S]*?\n---\n/)
+  return match ? content.slice(match[0].length) : content
+}
+
 export function EditorComponent({ path, lastUpdated }: EditorComponentProps) {
   const [content, setContent] = useState<string>('')
   const [error, setError] = useState<string>('')
   const saveTimeoutRef = useRef<NodeJS.Timeout>()
   const lastSavedContent = useRef<string>('')
+  const rawContent = useRef<string>('')
 
   // Load file content
   const loadContent = useCallback(async () => {
@@ -28,7 +35,9 @@ export function EditorComponent({ path, lastUpdated }: EditorComponentProps) {
 
       // Only update if content actually changed
       if (newContent !== lastSavedContent.current) {
-        setContent(newContent)
+        rawContent.current = newContent
+        const strippedContent = stripYamlFrontmatter(newContent)
+        setContent(strippedContent)
         lastSavedContent.current = newContent
       }
     } catch (err) {
@@ -50,8 +59,12 @@ export function EditorComponent({ path, lastUpdated }: EditorComponentProps) {
   const saveContent = useCallback(
     debounce(async (markdown: string) => {
       try {
-        await window.api.writeFile(path, markdown)
-        lastSavedContent.current = markdown
+        // Preserve the YAML frontmatter if it existed
+        const match = rawContent.current.match(/^---\n[\s\S]*?\n---\n/)
+        const contentToSave = match ? `${match[0]}${markdown}` : markdown
+        await window.api.writeFile(path, contentToSave)
+        lastSavedContent.current = contentToSave
+        rawContent.current = contentToSave
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to save file')
       }
@@ -61,7 +74,9 @@ export function EditorComponent({ path, lastUpdated }: EditorComponentProps) {
 
   const handleChange = useCallback(
     (markdown: string) => {
-      if (markdown !== lastSavedContent.current) {
+      const match = rawContent.current.match(/^---\n[\s\S]*?\n---\n/)
+      const contentToCompare = match ? `${match[0]}${markdown}` : markdown
+      if (contentToCompare !== lastSavedContent.current) {
         saveContent(markdown)
       }
     },
