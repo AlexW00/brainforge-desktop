@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { FileSystemNode } from '../../../../types/files'
+import { File } from '../../../../types/files'
 
 interface EditorComponentProps {
   path: string
@@ -74,34 +74,33 @@ function ImageComponent({ path }: ImageComponentProps) {
 }
 
 interface FileComponentProps {
-  node: FileSystemNode
+  node: File
 }
 
 export function FileComponent({ node }: FileComponentProps) {
   const isImage = useMemo(() => {
-    return node.type === 'file' && node.mimeType.startsWith('image/')
-  }, [node])
+    return node.mimeType.startsWith('image/')
+  }, [node.mimeType])
 
   const isText = useMemo(() => {
     return (
-      node.type === 'file' &&
-      (node.mimeType.startsWith('text/') ||
-        node.mimeType === 'application/json' ||
-        node.mimeType === 'application/javascript' ||
-        node.mimeType === 'application/typescript')
+      node.mimeType.startsWith('text/') ||
+      node.mimeType === 'application/json' ||
+      node.mimeType === 'application/javascript' ||
+      node.mimeType === 'application/typescript'
     )
-  }, [node])
+  }, [node.mimeType])
 
-  if (node.type !== 'file') {
-    return null
-  }
+  useEffect(() => {
+    // Force re-render when lastUpdated changes
+  }, [node.lastUpdated])
 
   if (isImage) {
-    return <ImageComponent path={node.path} mimeType={node.mimeType} />
+    return <ImageComponent path={node.path} mimeType={node.mimeType} key={node.lastUpdated} />
   }
 
   if (isText) {
-    return <EditorComponent path={node.path} />
+    return <EditorComponent path={node.path} key={node.lastUpdated} />
   }
 
   return (
