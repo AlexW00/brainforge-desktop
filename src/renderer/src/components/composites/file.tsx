@@ -26,7 +26,7 @@ export function FileComponent({ node }: FileComponentProps) {
   }
 
   if (isText) {
-    return <EditorComponent path={node.path} key={node.lastUpdated} />
+    return <EditorComponent path={node.path} lastUpdated={node.lastUpdated} />
   }
 
   return (

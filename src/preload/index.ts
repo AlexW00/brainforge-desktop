@@ -33,7 +33,8 @@ const api = {
       }
     }
   },
-  readFile: (path: string) => ipcRenderer.invoke('readFile', path)
+  readFile: (path: string) => ipcRenderer.invoke('readFile', path),
+  writeFile: (path: string, content: string) => ipcRenderer.invoke('writeFile', path, content)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to
