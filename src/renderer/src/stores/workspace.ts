@@ -25,6 +25,7 @@ export type WorkspaceState = {
   viewIndices: Map<string, number> // viewId -> current view index (= view history index)
   activeViewId?: string // currently active viewId
   layout?: Layout // the workspace layout
+  isDragging: boolean // whether a splitter is being dragged
 
   removeView: (viewId: string, newActiveViewId?: string) => void
   navigate: <T extends ViewName>(viewId: string, view: T, props?: ViewProps[T]) => void
@@ -48,6 +49,7 @@ export type WorkspaceState = {
   ) => void
   updateSplitPanel: (panelId: string, direction: SplitDirection, sizes: number[]) => void
   insertRootView: (view: ViewHistory) => void
+  setIsDragging: (isDragging: boolean) => void
 }
 
 // Helper functions for panel layout management
@@ -262,6 +264,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   viewIndices: new Map(),
   activeViewId: undefined,
   layout: undefined,
+  isDragging: false,
   insertRootView: (view: ViewHistory) => {
     const newViewId = crypto.randomUUID()
     set(
@@ -460,5 +463,16 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     const currentIndex = viewIndices.get(viewId) || 0
     const stack = views.get(viewId) || []
     return currentIndex < stack.length - 1
+  },
+
+  setIsDragging: (isDragging: boolean) => {
+    set(
+      produce((state) => {
+        state.isDragging = isDragging
+        // Apply user-select style to body based on dragging state
+        document.body.style.userSelect = isDragging ? 'none' : ''
+        document.body.style.webkitUserSelect = isDragging ? 'none' : ''
+      })
+    )
   }
 }))

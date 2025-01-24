@@ -5,13 +5,13 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function debounce<T extends (...args: any[]) => any>(
-  func: T,
+export function debounce<Args extends unknown[], R>(
+  func: (...args: Args) => R,
   wait: number
-): (...args: Parameters<T>) => void {
+): (...args: Args) => void {
   let timeout: NodeJS.Timeout | undefined
 
-  return (...args: Parameters<T>) => {
+  return (...args: Args) => {
     const later = () => {
       timeout = undefined
       func(...args)

@@ -44,7 +44,8 @@ export function WorkspaceView() {
     removeView,
     splitView,
     updateSplitPanel,
-    insertRootView
+    insertRootView,
+    setIsDragging
   } = useWorkspace()
 
   const [draggedViewId, setDraggedViewId] = useState<string>()
@@ -156,9 +157,11 @@ export function WorkspaceView() {
         minHeights={layout.sizes.map(() => 200)}
         minWidths={layout.sizes.map(() => 200)}
         initialSizes={layout.sizes}
-        onResizeFinished={(_pairIdx, newSizes) =>
+        onResizeStarted={() => setIsDragging(true)}
+        onResizeFinished={(_pairIdx, newSizes) => {
+          setIsDragging(false)
           updateSplitPanel(layout.id, layout.direction, newSizes)
-        }
+        }}
       >
         {layout.panels.map((panel, index) =>
           renderLayout(panel, [

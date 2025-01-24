@@ -1,6 +1,8 @@
 import { cn } from '@/lib/utils'
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
-import { EditorContent, useEditor } from '@tiptap/react'
+import { Document } from '@tiptap/extension-document'
+import { Typography } from '@tiptap/extension-typography'
+import { Editor, EditorContent, useEditor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { common, createLowlight } from 'lowlight'
 import { useEffect } from 'react'
@@ -24,18 +26,25 @@ export function MarkdownEditor({ content = '', onChange, className }: MarkdownEd
         lowlight
       }),
       Markdown.configure({
-        html: false,
+        html: true,
         tightLists: true,
         tightListClass: 'tight',
         bulletListMarker: '-',
         linkify: false,
-        breaks: false,
+        breaks: true,
         transformPastedText: true,
         transformCopiedText: true
-      })
+      }),
+      Typography,
+      Document
     ],
+    editorProps: {
+      attributes: {
+        class: 'prose prose-theme mx-auto focus:outline-none min-h-full pb-6 select-text'
+      }
+    },
     content,
-    onUpdate: ({ editor }) => {
+    onUpdate: ({ editor }: { editor: Editor }) => {
       const markdown = editor.storage.markdown.getMarkdown()
       onChange?.(markdown)
     }
