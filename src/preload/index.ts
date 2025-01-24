@@ -32,7 +32,8 @@ const api = {
         await ipcRenderer.invoke('unwatchFiles', watcherId)
       }
     }
-  }
+  },
+  readFile: (path: string) => ipcRenderer.invoke('readFile', path)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

@@ -11,22 +11,33 @@ function EditorComponent({ path }: EditorComponentProps) {
 
   useEffect(() => {
     window.api
-      .getFileContent(path)
-      .then(setContent)
+      .readFile(path)
+      .then((dataUrl) => {
+        const base64Content = dataUrl.split(',')[1]
+        // Convert base64 to bytes
+        const binaryString = atob(base64Content)
+        const bytes = new Uint8Array(binaryString.length)
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i)
+        }
+        // Decode bytes to text using UTF-8
+        const decoder = new TextDecoder('utf-8')
+        setContent(decoder.decode(bytes))
+      })
       .catch((err) => setError(err.message))
   }, [path])
 
   if (error) {
     return (
-      <div className="flex-1 overflow-auto flex items-center justify-center text-destructive">
+      <div className="w-full h-full flex items-center justify-center text-destructive">
         Error loading file: {error}
       </div>
     )
   }
 
   return (
-    <div className="flex-1 overflow-auto">
-      <pre className="p-4">{content}</pre>
+    <div className="w-full h-full overflow-auto">
+      <pre className="p-4 whitespace-pre-wrap break-words">{content}</pre>
     </div>
   )
 }
@@ -37,9 +48,27 @@ interface ImageComponentProps {
 }
 
 function ImageComponent({ path }: ImageComponentProps) {
+  const [dataUrl, setDataUrl] = useState<string>('')
+  const [error, setError] = useState<string>('')
+
+  useEffect(() => {
+    window.api
+      .readFile(path)
+      .then(setDataUrl)
+      .catch((err) => setError(err.message))
+  }, [path])
+
+  if (error) {
+    return (
+      <div className="w-full h-full flex items-center justify-center text-destructive">
+        Error loading image: {error}
+      </div>
+    )
+  }
+
   return (
-    <div className="flex-1 overflow-auto flex items-center justify-center">
-      <img src={`file://${path}`} alt={path} className="max-w-full max-h-full" />
+    <div className="w-full h-full flex items-center justify-center">
+      <img src={dataUrl} alt={path} className="max-w-full max-h-full object-contain" />
     </div>
   )
 }
@@ -76,7 +105,7 @@ export function FileComponent({ node }: FileComponentProps) {
   }
 
   return (
-    <div className="flex-1 flex items-center justify-center text-muted-foreground">
+    <div className="w-full h-full flex items-center justify-center text-muted-foreground">
       Cannot display file of type {node.mimeType}
     </div>
   )

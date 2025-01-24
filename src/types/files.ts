@@ -32,6 +32,7 @@ export interface FileSystemAPI {
   unwatchFiles: (watcher: string) => Promise<void>
   getStats: (path: string) => Promise<FileStats>
   getFileContent: (path: string) => Promise<string>
+  readFile: (path: string) => Promise<string>
 }
 
 export interface Node {

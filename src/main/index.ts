@@ -2,7 +2,7 @@ import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import type { FSWatcher } from 'chokidar'
 import chokidar from 'chokidar'
 import { app, BrowserWindow, ipcMain } from 'electron'
-import { lookup } from 'mime-types'
+import mime, { lookup } from 'mime-types'
 import { readdir, readFile, stat } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
@@ -130,9 +130,10 @@ app.whenReady().then(() => {
     }
   })
 
-  ipcMain.handle('getFileContent', async (_, path: string) => {
-    const content = await readFile(path, 'utf-8')
-    return content
+  ipcMain.handle('readFile', async (_, path: string) => {
+    const buffer = await readFile(path)
+    const mimeType = mime.lookup(path) || 'application/octet-stream'
+    return `data:${mimeType};base64,${buffer.toString('base64')}`
   })
 
   createWindow()
