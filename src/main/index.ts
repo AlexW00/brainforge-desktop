@@ -2,6 +2,7 @@ import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import type { FSWatcher } from 'chokidar'
 import chokidar from 'chokidar'
 import { app, BrowserWindow, ipcMain } from 'electron'
+import { lookup } from 'mime-types'
 import { readdir, stat } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
@@ -71,7 +72,10 @@ app.whenReady().then(() => {
     return entries.map((entry) => ({
       name: entry.name,
       type: entry.isDirectory() ? 'folder' : 'file',
-      path: join(path, entry.name)
+      path: join(path, entry.name),
+      mimeType: entry.isDirectory()
+        ? 'inode/directory'
+        : lookup(entry.name) || 'application/octet-stream'
     }))
   })
 

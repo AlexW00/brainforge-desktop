@@ -24,6 +24,7 @@ export function DirectoryComponent({
   onParentClick,
   isLoading
 }: DirectoryComponentProps) {
+  console.log(items)
   return (
     <div className="flex-1 overflow-auto">
       <Table>

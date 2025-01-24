@@ -3,6 +3,7 @@ export interface FileEntry {
   name: string
   type: 'file' | 'folder'
   path: string
+  mimeType: string
 }
 
 export interface FileWatcherOptions {
@@ -41,6 +42,7 @@ export interface Node {
 export interface File extends Node {
   type: 'file'
   data: Record<string, unknown>
+  mimeType: string
 }
 
 export interface Folder extends Node {

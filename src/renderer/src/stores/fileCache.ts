@@ -31,9 +31,7 @@ export const useFileCacheStore = create<FileCacheState>((set, get) => ({
   },
 
   listDirectory: (path: string) => {
-    console.log('listDirectory', path)
     const node = get().getNode(path)
-    console.log('node', node)
     if (!node || node.type !== 'folder') return []
     return Object.values(node.children)
   },
@@ -53,7 +51,6 @@ export const useFileCacheStore = create<FileCacheState>((set, get) => ({
 
     parent.children[fileName] = { ...existingNode, ...updates } as typeof existingNode
     set({ root: { ...root } })
-    console.log('updateNode', path, updates)
   },
 
   removeNode: (path: string) => {
@@ -108,6 +105,8 @@ export const useFileCacheStore = create<FileCacheState>((set, get) => ({
       recursive: true,
       onAdd: async (path) => {
         const stats = await window.api.getStats(path)
+        const files = await window.api.readDir(path.split('/').slice(0, -1).join('/'))
+        const fileInfo = files.find((f) => f.path === path)
         get().addNode(
           stats.isDirectory
             ? ({
@@ -122,7 +121,8 @@ export const useFileCacheStore = create<FileCacheState>((set, get) => ({
                 path,
                 lastUpdated: Date.now(),
                 lastIndexed: Date.now(),
-                data: {}
+                data: {},
+                mimeType: fileInfo?.mimeType || 'application/octet-stream'
               } as File)
         )
       },
@@ -154,7 +154,8 @@ export const useFileCacheStore = create<FileCacheState>((set, get) => ({
             path: fullPath,
             lastUpdated: now,
             lastIndexed: now,
-            data: {}
+            data: {},
+            mimeType: file?.mimeType || 'application/octet-stream'
           } as File
         }
       }
