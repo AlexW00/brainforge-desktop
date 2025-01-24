@@ -1,6 +1,7 @@
 import { cn } from '@/lib/utils'
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
 import { Document } from '@tiptap/extension-document'
+import { HardBreak } from '@tiptap/extension-hard-break'
 import { Typography } from '@tiptap/extension-typography'
 import { Editor, EditorContent, useEditor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
@@ -16,27 +17,46 @@ interface MarkdownEditorProps {
   className?: string
 }
 
+const CustomHardBreak = HardBreak.extend({
+  addKeyboardShortcuts() {
+    return {
+      Enter: () => {
+        if (this.editor.isActive('orderedList') || this.editor.isActive('bulletList')) {
+          return this.editor.chain().createParagraphNear().run()
+        }
+        return this.editor.commands.setHardBreak()
+      }
+    }
+  }
+})
+
 export function MarkdownEditor({ content = '', onChange, className }: MarkdownEditorProps) {
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-        codeBlock: false
+        document: false,
+        hardBreak: {
+          HTMLAttributes: {
+            class: ''
+          }
+        },
+        paragraph: {
+          HTMLAttributes: {
+            class: 'min-w-[1px] my-1 leading-5'
+          }
+        }
       }),
       CodeBlockLowlight.configure({
         lowlight
       }),
       Markdown.configure({
-        html: true,
-        tightLists: true,
-        tightListClass: 'tight',
-        bulletListMarker: '-',
-        linkify: false,
-        breaks: true,
+        linkify: true,
         transformPastedText: true,
-        transformCopiedText: true
+        breaks: true
       }),
       Typography,
-      Document
+      Document,
+      CustomHardBreak
     ],
     editorProps: {
       attributes: {

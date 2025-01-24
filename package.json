@@ -39,6 +39,7 @@
     "@radix-ui/react-tabs": "^1.1.2",
     "@radix-ui/react-tooltip": "^1.1.6",
     "@tiptap/extension-code-block-lowlight": "^2.11.3",
+    "@tiptap/extension-hard-break": "^2.11.3",
     "@tiptap/extension-task-item": "^2.11.3",
     "@tiptap/extension-task-list": "^2.11.3",
     "@tiptap/extension-typography": "^2.11.3",

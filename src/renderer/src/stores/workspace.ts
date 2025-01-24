@@ -220,7 +220,7 @@ const splitPanelInLayout = (
     return {
       ...layout,
       panels: layout.panels.map((panel) =>
-        splitPanelInLayout(panel, splitViewId, insertViewId, direction)
+        splitPanelInLayout(panel, splitViewId, insertViewId, direction, insertAt)
       )
     }
   }
