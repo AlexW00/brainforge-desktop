@@ -22,6 +22,7 @@ export interface FileStats {
   isDirectory: boolean
   isFile: boolean
   mtime: number
+  mimeType: string
 }
 
 export interface FileSystemAPI {
@@ -30,7 +31,9 @@ export interface FileSystemAPI {
     path: string
   ) => Promise<Array<{ name: string; type: 'file' | 'folder'; path: string; mimeType: string }>>
   joinPath: (...paths: string[]) => Promise<string>
-  getStats: (path: string) => Promise<{ isDirectory: boolean; isFile: boolean; mtime: number }>
+  getStats: (
+    path: string
+  ) => Promise<{ isDirectory: boolean; isFile: boolean; mtime: number; mimeType: string }>
   getRecentForges: () => Promise<string[]>
   selectForge: (path: string) => Promise<void>
   openForgePicker: () => Promise<void>

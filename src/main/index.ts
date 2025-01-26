@@ -245,7 +245,8 @@ app.whenReady().then(async () => {
     return {
       isDirectory: stats.isDirectory(),
       isFile: stats.isFile(),
-      mtime: stats.mtime.getTime()
+      mtime: stats.mtime.getTime(),
+      mimeType: stats.isDirectory() ? 'folder' : lookup(path) || 'application/octet-stream'
     }
   })
 

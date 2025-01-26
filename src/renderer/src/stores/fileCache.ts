@@ -31,9 +31,7 @@ export const useFileCacheStore = create<FileCacheState>((set, get) => ({
   },
 
   listDirectory: (path: string) => {
-    console.log('listDirectory', path)
     const node = get().getNode(path)
-    console.log('node', node)
     if (!node || node.type !== 'folder') return []
     return Object.values(node.children)
   },
@@ -122,7 +120,7 @@ export const useFileCacheStore = create<FileCacheState>((set, get) => ({
                 path,
                 lastUpdated: Date.now(),
                 lastIndexed: Date.now(),
-                mimeType: 'application/octet-stream', // Default MIME type, will be updated when directory is scanned
+                mimeType: stats.mimeType,
                 data: {}
               } as File)
         )
