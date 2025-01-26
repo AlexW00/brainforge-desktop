@@ -27,7 +27,13 @@ const customTheme = EditorView.theme({
     color: 'hsl(var(--foreground))'
   },
   '.cm-content': {
-    caretColor: 'hsl(var(--primary))'
+    caretColor: 'hsl(var(--primary))',
+    whiteSpace: 'pre-wrap',
+    wordBreak: 'break-word',
+    width: '100%'
+  },
+  '.cm-line': {
+    width: '100%'
   },
   '&.cm-focused .cm-cursor': {
     borderLeftColor: 'hsl(var(--primary))'
@@ -47,7 +53,8 @@ const customTheme = EditorView.theme({
     backgroundColor: 'transparent'
   },
   '.cm-scroller': {
-    fontFamily: 'inherit'
+    fontFamily: 'inherit',
+    overflow: 'auto !important'
   }
 })
 
@@ -92,13 +99,13 @@ function TextViewer({ file }: FileViewProps) {
   }, [])
 
   return (
-    <div className="flex-1 overflow-auto min-h-0">
+    <div className="flex-1 overflow-hidden min-h-0 relative">
       <CodeMirror
         value={content}
         height="100%"
         theme="dark"
         onChange={handleChange}
-        extensions={[markdown(), customTheme]}
+        extensions={[markdown(), customTheme, EditorView.lineWrapping]}
         basicSetup={{
           lineNumbers: false,
           foldGutter: false,
@@ -114,7 +121,7 @@ function TextViewer({ file }: FileViewProps) {
           highlightSelectionMatches: false,
           highlightActiveLineGutter: false
         }}
-        className="h-full [&_.cm-editor]:h-full [&_.cm-scroller]:!font-mono [&_.cm-content]:!py-4 [&_.cm-content]:!px-4"
+        className="h-full [&_.cm-editor]:h-full [&_.cm-scroller]:!font-mono [&_.cm-content]:!py-4 [&_.cm-content]:!px-4 [&_.cm-scroller]:!overflow-auto [&_.cm-line]:!break-words"
       />
       {isSaving && (
         <div className="absolute bottom-2 right-2 text-xs text-muted-foreground">Saving...</div>
