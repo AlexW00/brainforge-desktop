@@ -43,6 +43,8 @@ export interface FileSystemAPI {
   readFile: (path: string) => Promise<string>
   writeFile: (path: string, content: string) => Promise<void>
   mkdir: (path: string) => Promise<void>
+  rename: (oldPath: string, newPath: string) => Promise<void>
+  deleteFile: (path: string) => Promise<void>
 }
 
 export interface Node {

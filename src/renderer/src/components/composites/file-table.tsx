@@ -1,6 +1,20 @@
-import { FileIcon, FilePlusIcon, FolderIcon, FolderPlusIcon, SearchIcon } from 'lucide-react'
+import {
+  FileIcon,
+  FilePlusIcon,
+  FolderIcon,
+  FolderPlusIcon,
+  Pencil,
+  SearchIcon,
+  Trash2
+} from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Button } from '../ui/button'
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger
+} from '../ui/context-menu'
 import { Input } from '../ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table'
 
@@ -37,6 +51,8 @@ export function FileTable({
   const [isCreatingFile, setIsCreatingFile] = useState(false)
   const [newItemName, setNewItemName] = useState('')
   const [localFilter, setLocalFilter] = useState(filter)
+  const [isRenaming, setIsRenaming] = useState<string | null>(null)
+  const [renamingValue, setRenamingValue] = useState('')
   const filterTimeoutRef = useRef<NodeJS.Timeout>()
 
   useEffect(() => {
@@ -86,10 +102,38 @@ export function FileTable({
     if (e.key === 'Enter') {
       if (isCreatingFolder) await handleCreateFolder()
       if (isCreatingFile) await handleCreateFile()
+      if (isRenaming) {
+        const oldPath = isRenaming
+        const newPath = await window.api.joinPath(currentPath, renamingValue)
+        try {
+          await window.api.rename(oldPath, newPath)
+          setIsRenaming(null)
+          setRenamingValue('')
+        } catch (error) {
+          console.error('Failed to rename:', error)
+          // TODO: Show error toast
+        }
+      }
     } else if (e.key === 'Escape') {
       setIsCreatingFolder(false)
       setIsCreatingFile(false)
       setNewItemName('')
+      setIsRenaming(null)
+      setRenamingValue('')
+    }
+  }
+
+  const handleRename = (item: FileTableRow) => {
+    setIsRenaming(item.path)
+    setRenamingValue(item.name)
+  }
+
+  const handleDelete = async (item: FileTableRow) => {
+    try {
+      await window.api.deleteFile(item.path)
+    } catch (error) {
+      console.error('Failed to delete:', error)
+      // TODO: Show error toast
     }
   }
 
@@ -181,23 +225,63 @@ export function FileTable({
                 </TableRow>
               )}
               {filteredItems.map((item) => (
-                <TableRow
-                  key={item.path}
-                  className="cursor-pointer"
-                  onClick={() => onItemClick(item)}
-                >
-                  <TableCell className="flex items-center gap-2">
-                    {item.type === 'folder' ? (
-                      <FolderIcon className="h-4 w-4" />
-                    ) : (
-                      <FileIcon className="h-4 w-4" />
-                    )}
-                    {item.name}
-                  </TableCell>
-                  <TableCell>{item.type === 'folder' ? 'Folder' : 'File'}</TableCell>
-                  <TableCell>{item.size || '-'}</TableCell>
-                  <TableCell>{item.modified || '-'}</TableCell>
-                </TableRow>
+                <ContextMenu key={item.path}>
+                  <ContextMenuTrigger asChild>
+                    <TableRow
+                      className="cursor-pointer"
+                      onClick={() => {
+                        if (isRenaming !== item.path) {
+                          onItemClick(item)
+                        }
+                      }}
+                    >
+                      <TableCell className="flex items-center gap-2">
+                        {isRenaming === item.path ? (
+                          <>
+                            {item.type === 'folder' ? (
+                              <FolderIcon className="h-4 w-4" />
+                            ) : (
+                              <FileIcon className="h-4 w-4" />
+                            )}
+                            <Input
+                              value={renamingValue}
+                              onChange={(e) => setRenamingValue(e.target.value)}
+                              onKeyDown={handleKeyDown}
+                              autoFocus
+                              className="h-8"
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          </>
+                        ) : (
+                          <>
+                            {item.type === 'folder' ? (
+                              <FolderIcon className="h-4 w-4" />
+                            ) : (
+                              <FileIcon className="h-4 w-4" />
+                            )}
+                            {item.name}
+                          </>
+                        )}
+                      </TableCell>
+                      <TableCell>{item.type === 'folder' ? 'Folder' : 'File'}</TableCell>
+                      <TableCell>{item.size || '-'}</TableCell>
+                      <TableCell>{item.modified || '-'}</TableCell>
+                    </TableRow>
+                  </ContextMenuTrigger>
+                  <ContextMenuContent>
+                    <ContextMenuItem onClick={() => handleRename(item)} className="gap-2">
+                      <Pencil className="h-4 w-4" />
+                      Rename
+                    </ContextMenuItem>
+                    <ContextMenuItem
+                      onClick={() => handleDelete(item)}
+                      className="gap-2 text-destructive focus:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Delete
+                    </ContextMenuItem>
+                  </ContextMenuContent>
+                </ContextMenu>
               ))}
             </>
           )}

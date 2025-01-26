@@ -3,7 +3,7 @@ import type { FSWatcher } from 'chokidar'
 import chokidar from 'chokidar'
 import { app, BrowserWindow, dialog, ipcMain } from 'electron'
 import { lookup } from 'mime-types'
-import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises'
+import { mkdir, readdir, readFile, rename, rm, stat, unlink, writeFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { v4 as uuidv4 } from 'uuid'
@@ -255,6 +255,29 @@ app.whenReady().then(async () => {
       await mkdir(path, { recursive: true })
     } catch (error) {
       console.error('Error creating directory:', error)
+      throw error
+    }
+  })
+
+  ipcMain.handle('rename', async (_, oldPath: string, newPath: string) => {
+    try {
+      await rename(oldPath, newPath)
+    } catch (error) {
+      console.error('Error renaming file:', error)
+      throw error
+    }
+  })
+
+  ipcMain.handle('deleteFile', async (_, path: string) => {
+    try {
+      const stats = await stat(path)
+      if (stats.isDirectory()) {
+        await rm(path, { recursive: true })
+      } else {
+        await unlink(path)
+      }
+    } catch (error) {
+      console.error('Error deleting file:', error)
       throw error
     }
   })

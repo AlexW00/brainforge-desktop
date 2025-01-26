@@ -14,6 +14,8 @@ const api = {
   readFile: (path: string) => ipcRenderer.invoke('readFile', path),
   writeFile: (path: string, content: string) => ipcRenderer.invoke('writeFile', path, content),
   mkdir: (path: string) => ipcRenderer.invoke('mkdir', path),
+  rename: (oldPath: string, newPath: string) => ipcRenderer.invoke('rename', oldPath, newPath),
+  deleteFile: (path: string) => ipcRenderer.invoke('deleteFile', path),
   watchFiles: async (path: string, options: FileWatcherOptions): Promise<FileWatcher> => {
     const watcherId = await ipcRenderer.invoke('watchFiles', path)
 
