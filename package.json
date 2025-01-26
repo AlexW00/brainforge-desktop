@@ -1,10 +1,14 @@
 {
-  "name": "electron-app",
+  "name": "brainforge",
   "version": "1.0.0",
-  "description": "A modern Electron starter template with Vite, React, TypeScript, Tailwind, Shadcn UI, Framer Motion, and theme support.",
+  "description": "An IDE for your brain",
   "main": "./out/main/index.js",
-  "author": "7hourspg",
-  "homepage": "https://electron-vite.org",
+  "author": "Alexander Weichart",
+  "homepage": "https://alexanderweichart.de",
+  "build": {
+    "appId": "com.aweichart.brainforge",
+    "productName": "BrainForge"
+  },
   "scripts": {
     "format": "prettier --write .",
     "lint": "eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix",
@@ -18,7 +22,9 @@
     "build:unpack": "npm run build && electron-builder --dir",
     "build:win": "npm run build && electron-builder --win",
     "build:mac": "electron-vite build && electron-builder --mac",
-    "build:linux": "electron-vite build && electron-builder --linux"
+    "build:linux": "electron-vite build && electron-builder --linux",
+    "app:dir": "electron-builder --dir",
+    "app:dist": "electron-builder"
   },
   "dependencies": {
     "@codemirror/lang-markdown": "^6.3.2",
@@ -78,7 +84,7 @@
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.20",
     "electron": "^31.0.2",
-    "electron-builder": "^24.13.3",
+    "electron-builder": "^25.1.8",
     "electron-vite": "^2.3.0",
     "eslint": "^8.57.0",
     "eslint-plugin-react": "^7.34.3",
