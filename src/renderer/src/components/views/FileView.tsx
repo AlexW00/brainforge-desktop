@@ -6,6 +6,7 @@ import CodeMirror from '@uiw/react-codemirror'
 import { basicSetup } from 'codemirror'
 import { useEffect, useRef, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
+import rehypeRaw from 'rehype-raw'
 import { File } from '../../../../types/files'
 import { useView } from '../../contexts/ViewContext'
 
@@ -77,7 +78,7 @@ function MarkdownPreview({ content }: { content: string }) {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'e' && (event.metaKey || event.ctrlKey)) {
         event.preventDefault()
-        setViewProp('isPreview', false, true)
+        setViewProp('isPreview', false, false)
       }
     }
 
@@ -87,7 +88,7 @@ function MarkdownPreview({ content }: { content: string }) {
 
   return (
     <div className="prose prose-invert max-w-none p-4 overflow-auto">
-      <ReactMarkdown>{content}</ReactMarkdown>
+      <ReactMarkdown rehypePlugins={[rehypeRaw]}>{content}</ReactMarkdown>
     </div>
   )
 }
@@ -146,7 +147,7 @@ function TextViewer({ file }: FileViewProps) {
   }, [])
 
   const togglePreview = () => {
-    setViewProp('isPreview', !view.props.isPreview, true)
+    setViewProp('isPreview', !view.props.isPreview, false)
   }
 
   // Add keyboard shortcut to preview mode
