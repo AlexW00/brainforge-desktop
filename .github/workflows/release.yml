@@ -7,6 +7,10 @@ on:
 jobs:
   release:
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
 
     strategy:
       matrix:
