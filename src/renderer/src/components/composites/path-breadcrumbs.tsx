@@ -1,11 +1,11 @@
 import { Brain } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbSeparator
+    Breadcrumb,
+    BreadcrumbItem,
+    BreadcrumbLink,
+    BreadcrumbList,
+    BreadcrumbSeparator
 } from '../ui/breadcrumb'
 
 interface PathBreadcrumbsProps {
@@ -32,14 +32,14 @@ export function PathBreadcrumbs({ path, onBreadcrumbClick }: PathBreadcrumbsProp
   const getRelativeSegments = () => {
     if (!homePath || !path.startsWith(homePath)) return []
     const relativePath = path.slice(homePath.length)
-    return relativePath.split('/').filter(Boolean)
+    return relativePath.split(/[/\\]/).filter(Boolean)
   }
 
   const segments = getRelativeSegments()
 
-  const getPathUpToSegment = (index: number) => {
+  const getPathUpToSegment = async (index: number) => {
     const segmentsUpToIndex = segments.slice(0, index + 1)
-    return homePath + '/' + segmentsUpToIndex.join('/')
+    return window.api.joinPath(homePath, ...segmentsUpToIndex)
   }
 
   return (
@@ -59,7 +59,10 @@ export function PathBreadcrumbs({ path, onBreadcrumbClick }: PathBreadcrumbsProp
             <BreadcrumbSeparator>/</BreadcrumbSeparator>
             <BreadcrumbLink
               className="cursor-pointer"
-              onClick={() => onBreadcrumbClick(getPathUpToSegment(index))}
+              onClick={async () => {
+                const path = await getPathUpToSegment(index)
+                onBreadcrumbClick(path)
+              }}
             >
               {segment}
             </BreadcrumbLink>

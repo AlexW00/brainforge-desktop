@@ -16,8 +16,8 @@ export const useFileCacheStore = create<FileCacheState>((set, get) => ({
     if (path === '') return null
     if (path === root.path) return root
     if (path.startsWith(root.path)) {
-      const pathWithoutRoot = path.replace(root.path, '')
-      const segments = pathWithoutRoot.split('/').filter(Boolean)
+      const pathWithoutRoot = path.slice(root.path.length)
+      const segments = pathWithoutRoot.split(/[/\\]/).filter(Boolean)
       let current: FileSystemNode = root
       for (const segment of segments) {
         if (current.type !== 'folder') return null
@@ -40,8 +40,9 @@ export const useFileCacheStore = create<FileCacheState>((set, get) => ({
     const { root } = get()
     if (!root) return
 
-    const parentPath = path.split('/').slice(0, -1).join('/')
-    const fileName = path.split('/').pop()!
+    const segments = path.split(/[/\\]/)
+    const parentPath = segments.slice(0, -1).join('/')
+    const fileName = segments.pop()!
 
     const parent = get().getNode(parentPath)
     if (!parent || parent.type !== 'folder') return
@@ -58,8 +59,9 @@ export const useFileCacheStore = create<FileCacheState>((set, get) => ({
     const { root } = get()
     if (!root) return
 
-    const parentPath = path.split('/').slice(0, -1).join('/')
-    const fileName = path.split('/').pop()!
+    const segments = path.split(/[/\\]/)
+    const parentPath = segments.slice(0, -1).join('/')
+    const fileName = segments.pop()!
 
     const parent = get().getNode(parentPath)
     if (!parent || parent.type !== 'folder') return
@@ -73,8 +75,9 @@ export const useFileCacheStore = create<FileCacheState>((set, get) => ({
     const { root } = get()
     if (!root) return
 
-    const parentPath = node.path.split('/').slice(0, -1).join('/')
-    const fileName = node.path.split('/').pop()!
+    const segments = node.path.split(/[/\\]/)
+    const parentPath = segments.slice(0, -1).join('/')
+    const fileName = segments.pop()!
 
     const parent = get().getNode(parentPath)
     if (!parent || parent.type !== 'folder') return

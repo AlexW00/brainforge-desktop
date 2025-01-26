@@ -48,7 +48,7 @@ export function NodeView() {
   }
 
   const handleParentClick = async () => {
-    const segments = currentPath.split('/')
+    const segments = currentPath.split(/[/\\]/)
     segments.pop()
     const parentPath = segments.join('/')
     if (parentPath) {
@@ -69,7 +69,7 @@ export function NodeView() {
       ) : (
         <FileTable
           items={files.map((node) => ({
-            name: node.path.split('/').pop()!,
+            name: node.path.split(/[/\\]/).pop()!,
             path: node.path,
             type: node.type,
             lastModified: new Date(node.lastUpdated).toISOString()
