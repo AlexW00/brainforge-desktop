@@ -43,7 +43,7 @@ export function PathBreadcrumbs({ path, onBreadcrumbClick }: PathBreadcrumbsProp
   }
 
   return (
-    <Breadcrumb className="p-2">
+    <Breadcrumb className="p-2 select-none">
       <BreadcrumbList>
         <BreadcrumbItem>
           <BreadcrumbLink
