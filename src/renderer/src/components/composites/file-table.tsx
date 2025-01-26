@@ -154,10 +154,18 @@ export function FileTable({
     }
   }, [])
 
-  const filteredItems = items.filter(
-    (item) =>
-      !item.name.startsWith('.') && item.name.toLowerCase().includes(localFilter.toLowerCase())
-  )
+  const filteredItems = items
+    .filter(
+      (item) =>
+        !item.name.startsWith('.') && item.name.toLowerCase().includes(localFilter.toLowerCase())
+    )
+    .sort((a, b) => {
+      // Sort folders before files
+      if (a.type === 'folder' && b.type === 'file') return -1
+      if (a.type === 'file' && b.type === 'folder') return 1
+      // Then sort alphabetically
+      return a.name.localeCompare(b.name)
+    })
 
   return (
     <div className="flex-1 overflow-auto">

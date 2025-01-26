@@ -157,9 +157,13 @@ export function WorkspaceView() {
         minHeights={layout.sizes.map(() => 200)}
         minWidths={layout.sizes.map(() => 200)}
         initialSizes={layout.sizes}
-        onResizeFinished={(_pairIdx, newSizes) =>
+        onResizeStarted={() => {
+          document.body.classList.add('no-select')
+        }}
+        onResizeFinished={(_pairIdx, newSizes) => {
+          document.body.classList.remove('no-select')
           updateSplitPanel(layout.id, layout.direction, newSizes)
-        }
+        }}
       >
         {layout.panels.map((panel, index) =>
           renderLayout(panel, [
