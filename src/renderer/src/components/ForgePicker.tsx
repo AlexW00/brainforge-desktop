@@ -20,15 +20,15 @@ export function ForgePicker(): JSX.Element {
   const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
-    window.electron.ipcRenderer.invoke('getRecentForges').then(setRecentForges)
+    window.api.getRecentForges().then(setRecentForges)
   }, [])
 
   const handleSelectFolder = async () => {
     setIsLoading(true)
     try {
-      const result = await window.electron.ipcRenderer.invoke('dialog:openDirectory')
+      const result = await window.api.openDirectory()
       if (result) {
-        await window.electron.ipcRenderer.invoke('selectForge', result)
+        await window.api.selectForge(result)
       }
     } finally {
       setIsLoading(false)
@@ -38,7 +38,7 @@ export function ForgePicker(): JSX.Element {
   const handleForgeSelect = async (path: string) => {
     setIsLoading(true)
     try {
-      await window.electron.ipcRenderer.invoke('selectForge', path)
+      await window.api.selectForge(path)
     } finally {
       setIsLoading(false)
     }

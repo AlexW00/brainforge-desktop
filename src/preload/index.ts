@@ -7,6 +7,10 @@ const api = {
   readDir: (path: string) => ipcRenderer.invoke('readDir', path),
   joinPath: (...paths: string[]) => ipcRenderer.invoke('joinPath', ...paths),
   getStats: (path: string) => ipcRenderer.invoke('getStats', path),
+  getRecentForges: () => ipcRenderer.invoke('getRecentForges'),
+  selectForge: (path: string) => ipcRenderer.invoke('selectForge', path),
+  openForgePicker: () => ipcRenderer.invoke('openForgePicker'),
+  openDirectory: () => ipcRenderer.invoke('dialog:openDirectory'),
   watchFiles: async (path: string, options: FileWatcherOptions): Promise<FileWatcher> => {
     const watcherId = await ipcRenderer.invoke('watchFiles', path)
 
@@ -40,27 +44,6 @@ const api = {
 if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld('api', api)
-    contextBridge.exposeInMainWorld('electron', {
-      ipcRenderer: {
-        invoke: (channel: string, ...args: unknown[]) => {
-          const validChannels = [
-            'getHomePath',
-            'readDir',
-            'joinPath',
-            'watchFiles',
-            'unwatchFiles',
-            'getStats',
-            'getRecentForges',
-            'selectForge',
-            'dialog:openDirectory'
-          ]
-          if (validChannels.includes(channel)) {
-            return ipcRenderer.invoke(channel, ...args)
-          }
-          throw new Error(`Invalid channel: ${channel}`)
-        }
-      }
-    })
   } catch (error) {
     console.error(error)
   }

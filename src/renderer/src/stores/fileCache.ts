@@ -159,9 +159,9 @@ export const useFileCacheStore = create<FileCacheState>((set, get) => ({
         }
       }
     }
-
+    console.log('scanning', root)
     await scan(root)
-    console.log('root', root)
+    console.log('scanned', root)
     set({ root, isInitialized: true, watcher })
   }
 }))

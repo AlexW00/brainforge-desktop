@@ -21,6 +21,11 @@ let selectedForgePath: string | null = null
 const STATE_DIR = join(homedir(), '.brainforge')
 const STATE_FILE = join(STATE_DIR, 'state.json')
 
+interface AppState {
+  recentForges: string[]
+  lastActiveForge: string | null
+}
+
 async function ensureStateDir(): Promise<void> {
   try {
     await mkdir(STATE_DIR, { recursive: true })
@@ -29,16 +34,16 @@ async function ensureStateDir(): Promise<void> {
   }
 }
 
-async function loadState(): Promise<{ recentForges: string[] }> {
+async function loadState(): Promise<AppState> {
   try {
     const data = await readFile(STATE_FILE, 'utf-8')
     return JSON.parse(data)
   } catch {
-    return { recentForges: [] }
+    return { recentForges: [], lastActiveForge: null }
   }
 }
 
-async function saveState(state: { recentForges: string[] }): Promise<void> {
+async function saveState(state: AppState): Promise<void> {
   try {
     await writeFile(STATE_FILE, JSON.stringify(state, null, 2))
   } catch (error) {
@@ -115,14 +120,7 @@ app.whenReady().then(async () => {
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')
 
-  // Default open or close DevTools by F12 in development
-  // and ignore CommandOrControl + R in production.
-  // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
-  app.on('browser-window-created', (_, window) => {
-    optimizer.watchWindowShortcuts(window)
-  })
-
-  // IPC handlers
+  // Register all IPC handlers first
   ipcMain.handle('getHomePath', () => {
     return selectedForgePath || homedir()
   })
@@ -137,10 +135,9 @@ app.whenReady().then(async () => {
     selectedForgePath = path
     const state = await loadState()
     const recentForges = [path, ...state.recentForges.filter((p) => p !== path)].slice(0, 10)
-    await saveState({ recentForges })
+    await saveState({ ...state, recentForges, lastActiveForge: path })
 
     try {
-      // Verify the path exists and is accessible
       await stat(path)
     } catch (error) {
       console.error('Error accessing selected forge path:', error)
@@ -153,9 +150,6 @@ app.whenReady().then(async () => {
 
   ipcMain.handle('readDir', async (_, path: string) => {
     try {
-      // Ensure the path exists first
-      await stat(path)
-
       const entries = await readdir(path, { withFileTypes: true })
       return entries.map((entry) => ({
         name: entry.name,
@@ -232,19 +226,29 @@ app.whenReady().then(async () => {
     return null
   })
 
-  createForgePickerWindow()
-
-  app.on('activate', function () {
-    // On macOS it's common to re-create a window in the app when the
-    // dock icon is clicked and there are no other windows open.
-    if (BrowserWindow.getAllWindows().length === 0) {
-      if (!selectedForgePath) {
-        createForgePickerWindow()
-      } else {
-        createWindow()
-      }
-    }
+  ipcMain.handle('openForgePicker', () => {
+    createForgePickerWindow()
   })
+
+  // Default open or close DevTools by F12 in development
+  app.on('browser-window-created', (_, window) => {
+    optimizer.watchWindowShortcuts(window)
+  })
+
+  // Now check for last active forge and create appropriate window
+  const state = await loadState()
+  if (state.lastActiveForge) {
+    try {
+      await stat(state.lastActiveForge)
+      selectedForgePath = state.lastActiveForge
+      createWindow()
+    } catch {
+      console.log('Last active forge no longer accessible')
+      createForgePickerWindow()
+    }
+  } else {
+    createForgePickerWindow()
+  }
 })
 
 // Quit when all windows are closed, except on macOS. There, it's common

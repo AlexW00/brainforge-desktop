@@ -25,11 +25,15 @@ export interface FileStats {
 
 export interface FileSystemAPI {
   getHomePath: () => Promise<string>
-  readDir: (path: string) => Promise<Array<FileEntry>>
+  readDir: (path: string) => Promise<Array<{ name: string; type: 'file' | 'folder'; path: string }>>
   joinPath: (...paths: string[]) => Promise<string>
+  getStats: (path: string) => Promise<{ isDirectory: boolean; isFile: boolean; mtime: number }>
+  getRecentForges: () => Promise<string[]>
+  selectForge: (path: string) => Promise<void>
+  openForgePicker: () => Promise<void>
+  openDirectory: () => Promise<string | null>
   watchFiles: (path: string, options: FileWatcherOptions) => Promise<FileWatcher>
   unwatchFiles: (watcher: string) => Promise<void>
-  getStats: (path: string) => Promise<FileStats>
 }
 
 export interface Node {
