@@ -86,9 +86,7 @@ function createForgePickerWindow(): void {
 function createWindow(): void {
   // Create the browser window.
   mainWindow = new BrowserWindow({
-    width: 1280,
-    height: 720,
-    show: false,
+    show: true,
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon: join(__dirname, '../../build/icon.png') } : {}),
     webPreferences: {
@@ -101,6 +99,8 @@ function createWindow(): void {
   })
 
   mainWindow.on('ready-to-show', () => {
+    mainWindow?.setTitle('BrainForge')
+    mainWindow?.maximize()
     mainWindow?.show()
   })
 
@@ -183,12 +183,16 @@ app.whenReady().then(async () => {
   ipcMain.handle('readDir', async (_, path: string) => {
     try {
       const entries = await readdir(path, { withFileTypes: true })
-      return entries.map((entry) => ({
-        name: entry.name,
-        type: entry.isDirectory() ? 'folder' : 'file',
-        path: join(path, entry.name),
-        mimeType: entry.isDirectory() ? 'folder' : lookup(entry.name) || 'application/octet-stream'
-      }))
+      return entries
+        .filter((entry) => !entry.isSymbolicLink())
+        .map((entry) => ({
+          name: entry.name,
+          type: entry.isDirectory() ? 'folder' : 'file',
+          path: join(path, entry.name),
+          mimeType: entry.isDirectory()
+            ? 'folder'
+            : lookup(entry.name) || 'application/octet-stream'
+        }))
     } catch (error) {
       console.error('Error reading directory:', error)
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
