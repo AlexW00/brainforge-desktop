@@ -1,4 +1,4 @@
-import { FolderOpen, Globe, LucideIcon } from 'lucide-react'
+import { ArrowLeftRight, FolderOpen, Globe, LucideIcon } from 'lucide-react'
 
 import { useWorkspace } from '../contexts/WorkspaceContext'
 import { cn } from '../lib/utils'
@@ -70,7 +70,7 @@ export function AppSidebar(): JSX.Element {
               className={cn('h-7 w-7 hover:bg-accent hover:text-accent-foreground')}
               onClick={handleForgePickerClick}
             >
-              <FolderOpen className="h-[18px] w-[18px]" />
+              <ArrowLeftRight className="h-[18px] w-[18px]" />
             </Button>
           </TooltipTrigger>
           <TooltipContent side="right">
