@@ -295,8 +295,16 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       ) => {
         const view = get().views[viewId]
         if (!view) {
+          console.error('View not found')
           return
         }
+        const viewIndex = get().viewIndices[viewId]
+
+        if (viewIndex === undefined) {
+          console.error('View index not found')
+          return
+        }
+
         const newViewId = crypto.randomUUID()
 
         if (!splitView) {
@@ -306,7 +314,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         set(
           produce((state) => {
             state.views[newViewId] = splitView
-            state.viewIndices[newViewId] = splitView.length - 1
+            state.viewIndices[newViewId] = viewIndex
             state.activeViewId = newViewId
             state.layout = splitPanelInLayout(state.layout, viewId, newViewId, direction, insertAt)
           })
