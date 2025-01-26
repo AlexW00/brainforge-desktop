@@ -1,13 +1,14 @@
-import { useEffect, useState } from 'react'
+import { markdown } from '@codemirror/lang-markdown'
+import { EditorView } from '@codemirror/view'
+import CodeMirror from '@uiw/react-codemirror'
+import { useEffect, useRef, useState } from 'react'
 import { File } from '../../../../types/files'
-import { useFileCache } from '../../contexts/FileCacheContext'
-import { useView } from '../../contexts/ViewContext'
 
-interface FileViewerProps {
+interface FileViewProps {
   file: File
 }
 
-function ImageViewer({ file }: FileViewerProps) {
+function ImageViewer({ file }: FileViewProps) {
   return (
     <div className="flex flex-1 items-center justify-center">
       <img
@@ -19,22 +20,110 @@ function ImageViewer({ file }: FileViewerProps) {
   )
 }
 
-function TextViewer({ file }: FileViewerProps) {
+// Create a custom theme that matches shadcn aesthetic
+const customTheme = EditorView.theme({
+  '&': {
+    backgroundColor: 'hsl(var(--background))',
+    color: 'hsl(var(--foreground))'
+  },
+  '.cm-content': {
+    caretColor: 'hsl(var(--primary))'
+  },
+  '&.cm-focused .cm-cursor': {
+    borderLeftColor: 'hsl(var(--primary))'
+  },
+  '&.cm-focused .cm-selectionBackground, .cm-selectionBackground': {
+    backgroundColor: 'hsl(var(--muted) / 0.4)'
+  },
+  '.cm-activeLine': {
+    backgroundColor: 'transparent'
+  },
+  '.cm-gutters': {
+    backgroundColor: 'hsl(var(--background))',
+    color: 'hsl(var(--muted-foreground))',
+    border: 'none'
+  },
+  '.cm-activeLineGutter': {
+    backgroundColor: 'transparent'
+  },
+  '.cm-scroller': {
+    fontFamily: 'inherit'
+  }
+})
+
+function TextViewer({ file }: FileViewProps) {
   const [content, setContent] = useState<string>('')
+  const [isSaving, setIsSaving] = useState(false)
+  const saveTimeoutRef = useRef<NodeJS.Timeout>()
 
   useEffect(() => {
-    // In a real implementation, we'd want to handle large files properly
     window.api.readFile(file.path).then(setContent)
-  }, [file.path])
+  }, [file.path, file.lastUpdated])
+
+  const handleChange = (value: string) => {
+    setContent(value)
+
+    // Clear any existing save timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current)
+    }
+
+    // Set a new save timeout (autosave after 500ms of no typing)
+    saveTimeoutRef.current = setTimeout(async () => {
+      try {
+        setIsSaving(true)
+        await window.api.writeFile(file.path, value)
+      } catch (error) {
+        console.error('Failed to save file:', error)
+        // TODO: Show error toast
+      } finally {
+        setIsSaving(false)
+      }
+    }, 500)
+  }
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
+      }
+    }
+  }, [])
 
   return (
-    <div className="flex-1 p-4 font-mono text-sm overflow-auto">
-      <div className="whitespace-pre-wrap break-words w-full">{content}</div>
+    <div className="flex-1 overflow-auto min-h-0">
+      <CodeMirror
+        value={content}
+        height="100%"
+        theme="dark"
+        onChange={handleChange}
+        extensions={[markdown(), customTheme]}
+        basicSetup={{
+          lineNumbers: false,
+          foldGutter: false,
+          dropCursor: false,
+          allowMultipleSelections: false,
+          indentOnInput: true,
+          bracketMatching: true,
+          closeBrackets: true,
+          autocompletion: true,
+          rectangularSelection: false,
+          crosshairCursor: false,
+          highlightActiveLine: false,
+          highlightSelectionMatches: false,
+          highlightActiveLineGutter: false
+        }}
+        className="h-full [&_.cm-editor]:h-full [&_.cm-scroller]:!font-mono [&_.cm-content]:!py-4 [&_.cm-content]:!px-4"
+      />
+      {isSaving && (
+        <div className="absolute bottom-2 right-2 text-xs text-muted-foreground">Saving...</div>
+      )}
     </div>
   )
 }
 
-function DefaultViewer({ file }: FileViewerProps) {
+function DefaultViewer({ file }: FileViewProps) {
   return (
     <div className="flex flex-1 items-center justify-center text-muted-foreground">
       No viewer available for this file type ({file.mimeType})
@@ -42,21 +131,7 @@ function DefaultViewer({ file }: FileViewerProps) {
   )
 }
 
-export function FileView() {
-  const { view } = useView<'files'>()
-  const { isInitialized, getNode } = useFileCache()
-  const currentPath = view.props.path ?? ''
-  const currentNode = isInitialized ? getNode(currentPath) : null
-
-  if (!isInitialized || !currentNode || currentNode.type !== 'file') {
-    return (
-      <div className="flex flex-1 items-center justify-center text-muted-foreground">
-        File not found
-      </div>
-    )
-  }
-
-  const file = currentNode as File
+export function FileView({ file }: FileViewProps) {
   const mimeType = file.mimeType.toLowerCase()
 
   // Check if it's an image

@@ -10,6 +10,8 @@ export interface API {
   openForgePicker: () => Promise<void>
   openDirectory: () => Promise<string | null>
   watchFiles: (path: string, options: FileWatcherOptions) => Promise<FileWatcher>
+  readFile: (path: string) => Promise<string>
+  writeFile: (path: string, content: string) => Promise<void>
 }
 
 declare global {

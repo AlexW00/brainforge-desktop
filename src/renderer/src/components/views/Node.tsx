@@ -30,7 +30,7 @@ export function NodeView() {
           path={currentPath}
           onBreadcrumbClick={(path) => navigate('files', { path })}
         />
-        <FileView />
+        <FileView file={currentNode} />
       </div>
     )
   }

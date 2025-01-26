@@ -145,6 +145,15 @@ app.whenReady().then(async () => {
     }
   })
 
+  ipcMain.handle('writeFile', async (_, path: string, content: string) => {
+    try {
+      await writeFile(path, content, 'utf-8')
+    } catch (error) {
+      console.error('Error writing file:', error)
+      throw error
+    }
+  })
+
   ipcMain.handle('getRecentForges', async () => {
     const state = await loadState()
     return state.recentForges
