@@ -88,24 +88,30 @@ function MarkdownPreview({ content, file }: { content: string; file: File }) {
   }, [])
 
   return (
-    <div className="prose prose-invert max-w-none p-4 overflow-auto">
-      <ReactMarkdown
-        rehypePlugins={[rehypeRaw]}
-        components={{
-          img: ({ src, alt, ...props }) => {
-            if (!src) return null
-            // If the src is a relative path, make it absolute
-            const absoluteSrc = src.startsWith('.')
-              ? `file://${dirname}/${src.substring(2)}`
-              : src.startsWith('/')
-                ? `file://${src}`
-                : src
-            return <img src={absoluteSrc} alt={alt} {...props} />
-          }
-        }}
-      >
-        {content}
-      </ReactMarkdown>
+    <div className="h-full flex flex-col">
+      <div className="flex-1 min-h-0 p-4">
+        <div className="h-full overflow-auto">
+          <div className="prose prose-invert max-w-none">
+            <ReactMarkdown
+              rehypePlugins={[rehypeRaw]}
+              components={{
+                img: ({ src, alt, ...props }) => {
+                  if (!src) return null
+                  // If the src is a relative path, make it absolute
+                  const absoluteSrc = src.startsWith('.')
+                    ? `file://${dirname}/${src.substring(2)}`
+                    : src.startsWith('/')
+                      ? `file://${src}`
+                      : src
+                  return <img src={absoluteSrc} alt={alt} {...props} />
+                }
+              }}
+            >
+              {content}
+            </ReactMarkdown>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
