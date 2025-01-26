@@ -19,5 +19,7 @@ It offers:
 - pretty much documented in the video
 - to toggle md preview: cmd + e
 
-Note: This is a protoype I built in ~1 week. Feel free to do whatever you want with it!
-Note2: It's only tested on Linux.
+## Notes
+
+1. This is a protoype I built in ~1 week. Feel free to do whatever you want with it!
+2. It's only tested on Linux.
