@@ -5,59 +5,92 @@ import { githubDark } from '@fsegurai/codemirror-theme-bundle'
 import CodeMirror from '@uiw/react-codemirror'
 import { basicSetup } from 'codemirror'
 import { useEffect, useRef, useState } from 'react'
+import ReactMarkdown from 'react-markdown'
 import { File } from '../../../../types/files'
+import { useView } from '../../contexts/ViewContext'
 
 // Define markdown shortcuts
-const markdownKeymap = keymap.of([
-  {
-    key: 'Mod-b',
-    run: (view) => {
-      const selection = view.state.selection.main
-      const text = view.state.doc.sliceString(selection.from, selection.to)
-      view.dispatch({
-        changes: {
-          from: selection.from,
-          to: selection.to,
-          insert: text ? `**${text}**` : '****'
-        },
-        selection: text ? undefined : EditorSelection.cursor(selection.from + 2)
-      })
-      return true
+const createMarkdownKeymap = (onPreviewToggle: () => void) =>
+  keymap.of([
+    {
+      key: 'Mod-b',
+      run: (view) => {
+        const selection = view.state.selection.main
+        const text = view.state.doc.sliceString(selection.from, selection.to)
+        view.dispatch({
+          changes: {
+            from: selection.from,
+            to: selection.to,
+            insert: text ? `**${text}**` : '****'
+          },
+          selection: text ? undefined : EditorSelection.cursor(selection.from + 2)
+        })
+        return true
+      }
+    },
+    {
+      key: 'Mod-i',
+      run: (view) => {
+        const selection = view.state.selection.main
+        const text = view.state.doc.sliceString(selection.from, selection.to)
+        view.dispatch({
+          changes: {
+            from: selection.from,
+            to: selection.to,
+            insert: text ? `_${text}_` : '__'
+          },
+          selection: text ? undefined : EditorSelection.cursor(selection.from + 1)
+        })
+        return true
+      }
+    },
+    {
+      key: 'Mod-`',
+      run: (view) => {
+        const selection = view.state.selection.main
+        const text = view.state.doc.sliceString(selection.from, selection.to)
+        view.dispatch({
+          changes: {
+            from: selection.from,
+            to: selection.to,
+            insert: text ? `\`${text}\`` : '``'
+          },
+          selection: text ? undefined : EditorSelection.cursor(selection.from + 1)
+        })
+        return true
+      }
+    },
+    {
+      key: 'Mod-e',
+      run: () => {
+        onPreviewToggle()
+        return true
+      }
     }
-  },
-  {
-    key: 'Mod-i',
-    run: (view) => {
-      const selection = view.state.selection.main
-      const text = view.state.doc.sliceString(selection.from, selection.to)
-      view.dispatch({
-        changes: {
-          from: selection.from,
-          to: selection.to,
-          insert: text ? `_${text}_` : '__'
-        },
-        selection: text ? undefined : EditorSelection.cursor(selection.from + 1)
-      })
-      return true
+  ])
+
+function MarkdownPreview({ content }: { content: string }) {
+  const { setViewProp } = useView<'files'>()
+
+  // Add keyboard shortcut to exit preview mode
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'e' && (event.metaKey || event.ctrlKey)) {
+        event.preventDefault()
+        setViewProp('isPreview', false, true)
+      }
     }
-  },
-  {
-    key: 'Mod-`',
-    run: (view) => {
-      const selection = view.state.selection.main
-      const text = view.state.doc.sliceString(selection.from, selection.to)
-      view.dispatch({
-        changes: {
-          from: selection.from,
-          to: selection.to,
-          insert: text ? `\`${text}\`` : '``'
-        },
-        selection: text ? undefined : EditorSelection.cursor(selection.from + 1)
-      })
-      return true
-    }
-  }
-])
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
+  return (
+    <div className="prose prose-invert max-w-none p-4 overflow-auto">
+      <ReactMarkdown>{content}</ReactMarkdown>
+    </div>
+  )
+}
 
 interface FileViewProps {
   file: File
@@ -76,6 +109,7 @@ function ImageViewer({ file }: FileViewProps) {
 }
 
 function TextViewer({ file }: FileViewProps) {
+  const { view, setViewProp } = useView<'files'>()
   const [content, setContent] = useState<string>('')
   const saveTimeoutRef = useRef<NodeJS.Timeout>()
 
@@ -111,29 +145,56 @@ function TextViewer({ file }: FileViewProps) {
     }
   }, [])
 
+  const togglePreview = () => {
+    setViewProp('isPreview', !view.props.isPreview, true)
+  }
+
+  // Add keyboard shortcut to preview mode
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'e' && (event.metaKey || event.ctrlKey)) {
+        event.preventDefault()
+        togglePreview()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [view.props.isPreview])
+
   return (
     <div className="flex-1 overflow-hidden min-h-0 relative bg-background">
-      <CodeMirror
-        value={content}
-        height="100%"
-        onChange={handleChange}
-        extensions={[basicSetup, markdown(), EditorView.lineWrapping, githubDark, markdownKeymap]}
-        basicSetup={{
-          lineNumbers: false,
-          foldGutter: false,
-          dropCursor: false,
-          allowMultipleSelections: false,
-          indentOnInput: true,
-          bracketMatching: true,
-          closeBrackets: true,
-          autocompletion: true,
-          rectangularSelection: false,
-          crosshairCursor: false,
-          highlightActiveLine: false,
-          highlightSelectionMatches: false
-        }}
-        className="h-full [&_.cm-editor]:h-full [&_.cm-scroller]:!font-mono [&_.cm-content]:!py-4 [&_.cm-content]:!px-4 [&_.cm-scroller]:!overflow-auto [&_.cm-line]:!break-words [&_.cm-editor]:bg-background [&_.cm-gutters]:!hidden [&_.cm-activeLine]:!bg-transparent"
-      />
+      {view.props.isPreview ? (
+        <MarkdownPreview content={content} />
+      ) : (
+        <CodeMirror
+          value={content}
+          height="100%"
+          onChange={handleChange}
+          extensions={[
+            basicSetup,
+            markdown(),
+            EditorView.lineWrapping,
+            githubDark,
+            createMarkdownKeymap(togglePreview)
+          ]}
+          basicSetup={{
+            lineNumbers: false,
+            foldGutter: false,
+            dropCursor: false,
+            allowMultipleSelections: false,
+            indentOnInput: true,
+            bracketMatching: true,
+            closeBrackets: true,
+            autocompletion: true,
+            rectangularSelection: false,
+            crosshairCursor: false,
+            highlightActiveLine: false,
+            highlightSelectionMatches: false
+          }}
+          className="h-full [&_.cm-editor]:h-full [&_.cm-scroller]:!font-mono [&_.cm-content]:!py-4 [&_.cm-content]:!px-4 [&_.cm-scroller]:!overflow-auto [&_.cm-line]:!break-words [&_.cm-editor]:bg-background [&_.cm-gutters]:!hidden [&_.cm-activeLine]:!bg-transparent"
+        />
+      )}
     </div>
   )
 }

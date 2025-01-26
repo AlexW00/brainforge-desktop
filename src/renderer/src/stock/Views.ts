@@ -19,6 +19,7 @@ export interface BrowserViewProps {
 
 export interface FilesViewProps {
   path: string
+  isPreview?: boolean
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
