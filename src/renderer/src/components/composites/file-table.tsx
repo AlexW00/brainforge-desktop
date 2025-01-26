@@ -7,7 +7,7 @@ import {
   SearchIcon,
   Trash2
 } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button } from '../ui/button'
 import {
   ContextMenu,
@@ -56,18 +56,29 @@ export function FileTable({
   const filterTimeoutRef = useRef<NodeJS.Timeout>()
 
   useEffect(() => {
+    setIsCreatingFolder(false)
+    setIsCreatingFile(false)
+    setNewItemName('')
+    setIsRenaming(null)
+    setRenamingValue('')
+  }, [currentPath])
+
+  useEffect(() => {
     setLocalFilter(filter)
   }, [filter])
 
-  const handleFilterChange = (value: string) => {
-    setLocalFilter(value)
-    if (filterTimeoutRef.current) {
-      clearTimeout(filterTimeoutRef.current)
-    }
-    filterTimeoutRef.current = setTimeout(() => {
-      onFilterChange(value)
-    }, 300)
-  }
+  const handleFilterChange = useCallback(
+    (value: string) => {
+      setLocalFilter(value)
+      if (filterTimeoutRef.current) {
+        clearTimeout(filterTimeoutRef.current)
+      }
+      filterTimeoutRef.current = setTimeout(() => {
+        onFilterChange(value)
+      }, 300)
+    },
+    [onFilterChange]
+  )
 
   useEffect(() => {
     return () => {
@@ -77,65 +88,76 @@ export function FileTable({
     }
   }, [])
 
-  const filteredItems = items.filter(
-    (item) =>
-      !item.name.startsWith('.') && item.name.toLowerCase().includes(localFilter.toLowerCase())
-  )
-
-  const handleCreateFolder = async () => {
+  const handleCreateFolder = useCallback(async () => {
     if (!newItemName) return
     const newPath = await window.api.joinPath(currentPath, newItemName)
     await window.api.mkdir(newPath)
     setIsCreatingFolder(false)
     setNewItemName('')
-  }
+  }, [currentPath, newItemName])
 
-  const handleCreateFile = async () => {
+  const handleCreateFile = useCallback(async () => {
     if (!newItemName) return
     const newPath = await window.api.joinPath(currentPath, newItemName)
     await window.api.writeFile(newPath, '')
     setIsCreatingFile(false)
     setNewItemName('')
-  }
+  }, [currentPath, newItemName])
 
-  const handleKeyDown = async (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      if (isCreatingFolder) await handleCreateFolder()
-      if (isCreatingFile) await handleCreateFile()
-      if (isRenaming) {
-        const oldPath = isRenaming
-        const newPath = await window.api.joinPath(currentPath, renamingValue)
-        try {
-          await window.api.rename(oldPath, newPath)
-          setIsRenaming(null)
-          setRenamingValue('')
-        } catch (error) {
-          console.error('Failed to rename:', error)
-          // TODO: Show error toast
+  const handleKeyDown = useCallback(
+    async (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        if (isCreatingFolder) await handleCreateFolder()
+        if (isCreatingFile) await handleCreateFile()
+        if (isRenaming) {
+          const oldPath = isRenaming
+          const newPath = await window.api.joinPath(currentPath, renamingValue)
+          try {
+            await window.api.rename(oldPath, newPath)
+            setIsRenaming(null)
+            setRenamingValue('')
+          } catch (error) {
+            console.error('Failed to rename:', error)
+            // TODO: Show error toast
+          }
         }
+      } else if (e.key === 'Escape') {
+        setIsCreatingFolder(false)
+        setIsCreatingFile(false)
+        setNewItemName('')
+        setIsRenaming(null)
+        setRenamingValue('')
       }
-    } else if (e.key === 'Escape') {
-      setIsCreatingFolder(false)
-      setIsCreatingFile(false)
-      setNewItemName('')
-      setIsRenaming(null)
-      setRenamingValue('')
-    }
-  }
+    },
+    [
+      isCreatingFolder,
+      isCreatingFile,
+      isRenaming,
+      currentPath,
+      renamingValue,
+      handleCreateFolder,
+      handleCreateFile
+    ]
+  )
 
-  const handleRename = (item: FileTableRow) => {
+  const handleRename = useCallback((item: FileTableRow) => {
     setIsRenaming(item.path)
     setRenamingValue(item.name)
-  }
+  }, [])
 
-  const handleDelete = async (item: FileTableRow) => {
+  const handleDelete = useCallback(async (item: FileTableRow) => {
     try {
       await window.api.deleteFile(item.path)
     } catch (error) {
       console.error('Failed to delete:', error)
       // TODO: Show error toast
     }
-  }
+  }, [])
+
+  const filteredItems = items.filter(
+    (item) =>
+      !item.name.startsWith('.') && item.name.toLowerCase().includes(localFilter.toLowerCase())
+  )
 
   return (
     <div className="flex-1 overflow-auto">
