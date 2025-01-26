@@ -1,10 +1,11 @@
 {
   "name": "brainforge",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "An IDE for your brain",
   "main": "./out/main/index.js",
   "author": "Alexander Weichart",
   "homepage": "https://alexanderweichart.de",
+  "license": "MIT",
   "build": {
     "appId": "com.aweichart.brainforge",
     "productName": "BrainForge"
