@@ -22,6 +22,10 @@ export function NodeView() {
   const currentPath = view.props.path ?? ''
   const currentNode = isInitialized ? getNode(currentPath) : null
 
+  const handleFilterChange = (filter: string) => {
+    setViewProp('filter', filter)
+  }
+
   // If the current node is a file, show the FileView
   if (currentNode?.type === 'file') {
     return (
@@ -74,6 +78,9 @@ export function NodeView() {
           onItemClick={handleItemClick}
           onParentClick={handleParentClick}
           isLoading={!isInitialized}
+          currentPath={currentPath}
+          filter={view.props.filter}
+          onFilterChange={handleFilterChange}
         />
       )}
     </div>
