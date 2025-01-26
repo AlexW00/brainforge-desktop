@@ -37,6 +37,7 @@ export interface FileSystemAPI {
   openDirectory: () => Promise<string | null>
   watchFiles: (path: string, options: FileWatcherOptions) => Promise<FileWatcher>
   unwatchFiles: (watcher: string) => Promise<void>
+  readFile: (path: string) => Promise<string>
 }
 
 export interface Node {

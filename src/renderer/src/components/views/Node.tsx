@@ -3,6 +3,7 @@ import { useFileCache } from '../../contexts/FileCacheContext'
 import { useView } from '../../contexts/ViewContext'
 import { FileTable } from '../composites/file-table'
 import { PathBreadcrumbs } from '../composites/path-breadcrumbs'
+import { FileView } from './FileView'
 
 export function NodeView() {
   const { view, navigate, setViewProp } = useView<'files'>()
@@ -21,14 +22,25 @@ export function NodeView() {
   const currentPath = view.props.path ?? ''
   const currentNode = isInitialized ? getNode(currentPath) : null
 
+  // If the current node is a file, show the FileView
+  if (currentNode?.type === 'file') {
+    return (
+      <div className="flex flex-col h-full">
+        <PathBreadcrumbs
+          path={currentPath}
+          onBreadcrumbClick={(path) => navigate('files', { path })}
+        />
+        <FileView />
+      </div>
+    )
+  }
+
   const files = isInitialized ? listDirectory(currentPath) : []
   const showParentFolder = currentNode !== null && currentNode.path !== currentPath
 
   const handleItemClick = async (item: { type: string; name: string }) => {
-    if (item.type === 'folder') {
-      const newPath = await window.api.joinPath(currentPath, item.name)
-      navigate('files', { path: newPath })
-    }
+    const newPath = await window.api.joinPath(currentPath, item.name)
+    navigate('files', { path: newPath })
   }
 
   const handleParentClick = async () => {

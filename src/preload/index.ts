@@ -11,6 +11,7 @@ const api = {
   selectForge: (path: string) => ipcRenderer.invoke('selectForge', path),
   openForgePicker: () => ipcRenderer.invoke('openForgePicker'),
   openDirectory: () => ipcRenderer.invoke('dialog:openDirectory'),
+  readFile: (path: string) => ipcRenderer.invoke('readFile', path),
   watchFiles: async (path: string, options: FileWatcherOptions): Promise<FileWatcher> => {
     const watcherId = await ipcRenderer.invoke('watchFiles', path)
 

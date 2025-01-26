@@ -95,7 +95,8 @@ function createWindow(): void {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
       webviewTag: true,
-      contextIsolation: true
+      contextIsolation: true,
+      webSecurity: false
     }
   })
 
@@ -128,6 +129,20 @@ app.whenReady().then(async () => {
   // Register all IPC handlers first
   ipcMain.handle('getHomePath', () => {
     return selectedForgePath || homedir()
+  })
+
+  ipcMain.handle('readFile', async (_, path: string) => {
+    try {
+      const stats = await stat(path)
+      if (!stats.isFile()) {
+        throw new Error('Not a file')
+      }
+      const content = await readFile(path, 'utf-8')
+      return content
+    } catch (error) {
+      console.error('Error reading file:', error)
+      throw error
+    }
   })
 
   ipcMain.handle('getRecentForges', async () => {
