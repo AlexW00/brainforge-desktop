@@ -8,12 +8,13 @@ import { Layout } from '../../stores/workspace'
 import { Panel } from '../composites/Panel'
 import { PanelDragOverlay } from '../composites/panel-drag-overlay'
 import { BrowserView } from './Browser'
+import { HomeView } from './Home'
 import { NodeView } from './Node'
 
 const viewComponents = {
   browser: <BrowserView />,
   files: <NodeView />,
-  home: <div />
+  home: <HomeView />
 } as const
 
 type GutterPosition = 'left' | 'right' | 'top' | 'bottom'
