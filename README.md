@@ -20,3 +20,4 @@ It offers:
 - to toggle md preview: cmd + e
 
 Note: This is a protoype I built in ~1 week. Feel free to do whatever you want with it!
+Note2: It's only tested on Linux.
