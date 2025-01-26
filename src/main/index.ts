@@ -144,7 +144,10 @@ app.whenReady().then(async () => {
       throw new Error(`Cannot access selected directory: ${path}`)
     }
 
-    forgePickerWindow?.close()
+    // Close all existing windows
+    BrowserWindow.getAllWindows().forEach((window) => window.close())
+
+    // Create new main window
     createWindow()
   })
 
