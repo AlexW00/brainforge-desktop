@@ -42,6 +42,7 @@ export interface FileSystemAPI {
   unwatchFiles: (watcher: string) => Promise<void>
   readFile: (path: string) => Promise<string>
   writeFile: (path: string, content: string) => Promise<void>
+  mkdir: (path: string) => Promise<void>
 }
 
 export interface Node {

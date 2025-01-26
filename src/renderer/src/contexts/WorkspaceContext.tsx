@@ -20,7 +20,16 @@ export function useWorkspace() {
 
 export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const store = useWorkspaceStore()
+  const [isHydrated, setIsHydrated] = React.useState(false)
   const activeViewId = store.activeViewId || 'base'
+
+  React.useEffect(() => {
+    const hydrate = async () => {
+      await useWorkspaceStore.persist.rehydrate()
+      setIsHydrated(true)
+    }
+    hydrate()
+  }, [])
 
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -60,6 +69,10 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       ...store
     }
   }, [store])
+
+  if (!isHydrated) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>
+  }
 
   return <WorkspaceContext.Provider value={value}>{children}</WorkspaceContext.Provider>
 }

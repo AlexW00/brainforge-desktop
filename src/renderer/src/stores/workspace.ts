@@ -1,6 +1,7 @@
 import { SplitDirection } from '@devbookhq/splitter'
 import { enableMapSet, produce } from 'immer'
 import { create } from 'zustand'
+import { createJSONStorage, persist } from 'zustand/middleware'
 import { ViewHistory, ViewName, ViewProps } from '../stock/Views'
 
 enableMapSet()
@@ -21,8 +22,8 @@ export type Layout = Panel | SplitPanel
 export type InsertAt = 'before' | 'after'
 
 export type WorkspaceState = {
-  views: Map<string, ViewHistory> // viewId -> view history
-  viewIndices: Map<string, number> // viewId -> current view index (= view history index)
+  views: Record<string, ViewHistory> // viewId -> view history
+  viewIndices: Record<string, number> // viewId -> current view index (= view history index)
   activeViewId?: string // currently active viewId
   layout?: Layout // the workspace layout
 
@@ -257,208 +258,293 @@ const findFirstPanel = (layout: Layout): Panel | null => {
   return layout.panels.map((panel) => findFirstPanel(panel)).find((panel) => panel !== null) || null
 }
 
-export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
-  views: new Map(),
-  viewIndices: new Map(),
-  activeViewId: undefined,
-  layout: undefined,
-  insertRootView: (view: ViewHistory) => {
-    const newViewId = crypto.randomUUID()
-    set(
-      produce((state) => {
-        state.views.set(newViewId, view)
-        state.viewIndices.set(newViewId, 0)
-        state.activeViewId = newViewId
-        state.layout = { viewId: newViewId }
-      })
-    )
-  },
-  splitView: (
-    viewId: string,
-    direction: SplitDirection,
-    splitView?: ViewHistory,
-    insertAt?: InsertAt
-  ) => {
-    const view = get().views.get(viewId)
-    if (!view) {
-      return
-    }
-    const newViewId = crypto.randomUUID()
-
-    if (!splitView) {
-      splitView = view
-    }
-
-    set(
-      produce((state) => {
-        state.views.set(newViewId, splitView)
-        state.viewIndices.set(newViewId, splitView.length - 1)
-        state.activeViewId = newViewId
-        state.layout = splitPanelInLayout(state.layout, viewId, newViewId, direction, insertAt)
-      })
-    )
-  },
-
-  removeView: (viewId: string, newActiveViewId?: string) => {
-    set(
-      produce((state) => {
-        if (newActiveViewId) {
-          state.activeViewId = newActiveViewId
-        } else {
-          // by default, set active view to the panel next to the removed view
-          const neighbor = get().layout ? getNeighborOfPanel(get().layout!, viewId) : null
-          const firstPanel = neighbor ? findFirstPanel(neighbor) : null
-          if (firstPanel && state.activeViewId === viewId) {
-            state.activeViewId = firstPanel.viewId
-          }
-        }
-
-        // now, remove the view from the layout
-        const result = removePanelFromLayout(state.layout!, viewId)
-        state.views.delete(viewId)
-        state.viewIndices.delete(viewId)
-        state.layout = result.layout
-      })
-    )
-  },
-
-  updateSplitPanel: (panelId: string, direction: SplitDirection, sizes: number[]) => {
-    set(
-      produce((state) => {
-        state.layout = updateSplitPanelInLayout(state.layout, panelId, direction, sizes)
-      })
-    )
-  },
-
-  navigate: <T extends ViewName>(
-    viewId: string,
-    view: T,
-    props: ViewProps[T] = {} as ViewProps[T]
-  ) => {
-    set(
-      produce((state) => {
-        const currentIndex = state.viewIndices.get(viewId) || 0
-        const stack = state.views.get(viewId) || []
-
-        const newStack = stack.slice(0, currentIndex + 1)
-        newStack.push({ name: view, props })
-
-        state.views.set(viewId, newStack)
-        state.viewIndices.set(viewId, newStack.length - 1)
-      })
-    )
-  },
-
-  setViewProps: <T extends ViewName>(viewId: string, props: ViewProps[T], canUndo = false) => {
-    const { views, viewIndices } = get()
-    const currentIndex = viewIndices.get(viewId) || 0
-    const stack = views.get(viewId) || []
-    const currentView = stack[currentIndex]
-
-    if (!currentView) return
-
-    set(
-      produce((state) => {
-        if (canUndo) {
-          const newStack = stack.slice(0, currentIndex + 1)
-          newStack.push({
-            name: currentView.name as T,
-            props: { ...props }
-          })
-          state.views.set(viewId, newStack)
-          state.viewIndices.set(viewId, newStack.length - 1)
-        } else {
-          const newStack = [...stack]
-          newStack[currentIndex] = {
-            name: currentView.name as T,
-            props: { ...props }
-          }
-          state.views.set(viewId, newStack)
-        }
-      })
-    )
-  },
-
-  setViewProp: <T extends ViewName, K extends keyof ViewProps[T]>(
-    viewId: string,
-    key: K,
-    value: ViewProps[T][K],
-    canUndo = false
-  ) => {
-    const { views, viewIndices } = get()
-    const currentIndex = viewIndices.get(viewId) || 0
-    const stack = views.get(viewId) || []
-    const currentView = stack[currentIndex]
-
-    if (!currentView) return
-
-    const updatedProps = { ...currentView.props, [key]: value }
-
-    set(
-      produce((state) => {
-        if (canUndo) {
-          const newStack = stack.slice(0, currentIndex + 1)
-          newStack.push({
-            name: currentView.name as T,
-            props: updatedProps
-          })
-          state.views.set(viewId, newStack)
-          state.viewIndices.set(viewId, newStack.length - 1)
-        } else {
-          const newStack = [...stack]
-          newStack[currentIndex] = {
-            name: currentView.name as T,
-            props: updatedProps
-          }
-          state.views.set(viewId, newStack)
-        }
-      })
-    )
-  },
-
-  goBack: (viewId: string) => {
-    const { viewIndices } = get()
-    const currentIndex = viewIndices.get(viewId) || 0
-    if (currentIndex > 0) {
-      set(
-        produce((state) => {
-          state.viewIndices.set(viewId, currentIndex - 1)
-        })
-      )
-    }
-  },
-
-  goForward: (viewId: string) => {
-    const { views, viewIndices } = get()
-    const currentIndex = viewIndices.get(viewId) || 0
-    const stack = views.get(viewId) || []
-    if (currentIndex < stack.length - 1) {
-      set(
-        produce((state) => {
-          state.viewIndices.set(viewId, currentIndex + 1)
-        })
-      )
-    }
-  },
-
-  setActiveView: (viewId: string) => {
-    set(
-      produce((state) => {
-        state.activeViewId = viewId
-      })
-    )
-  },
-
-  canGoBack: (viewId: string) => {
-    const { viewIndices } = get()
-    const currentIndex = viewIndices.get(viewId) || 0
-    return currentIndex > 0
-  },
-
-  canGoForward: (viewId: string) => {
-    const { views, viewIndices } = get()
-    const currentIndex = viewIndices.get(viewId) || 0
-    const stack = views.get(viewId) || []
-    return currentIndex < stack.length - 1
+// Helper function to ensure .brainforge directory exists
+const ensureBrainforgeDir = async (homePath: string) => {
+  const dirPath = await window.api.joinPath(homePath, '.brainforge')
+  try {
+    await window.api.getStats(dirPath)
+  } catch {
+    // Directory doesn't exist, create it
+    await window.api.mkdir(dirPath)
   }
-}))
+}
+
+export const useWorkspaceStore = create<WorkspaceState>()(
+  persist(
+    (set, get) => ({
+      views: {},
+      viewIndices: {},
+      activeViewId: undefined,
+      layout: undefined,
+      insertRootView: (view: ViewHistory) => {
+        const newViewId = crypto.randomUUID()
+        set(
+          produce((state) => {
+            state.views[newViewId] = view
+            state.viewIndices[newViewId] = 0
+            state.activeViewId = newViewId
+            state.layout = { viewId: newViewId }
+          })
+        )
+      },
+      splitView: (
+        viewId: string,
+        direction: SplitDirection,
+        splitView?: ViewHistory,
+        insertAt?: InsertAt
+      ) => {
+        const view = get().views[viewId]
+        if (!view) {
+          return
+        }
+        const newViewId = crypto.randomUUID()
+
+        if (!splitView) {
+          splitView = view
+        }
+
+        set(
+          produce((state) => {
+            state.views[newViewId] = splitView
+            state.viewIndices[newViewId] = splitView.length - 1
+            state.activeViewId = newViewId
+            state.layout = splitPanelInLayout(state.layout, viewId, newViewId, direction, insertAt)
+          })
+        )
+      },
+
+      removeView: (viewId: string, newActiveViewId?: string) => {
+        set(
+          produce((state) => {
+            if (newActiveViewId) {
+              state.activeViewId = newActiveViewId
+            } else {
+              // by default, set active view to the panel next to the removed view
+              const neighbor = state.layout ? getNeighborOfPanel(state.layout, viewId) : null
+              const firstPanel = neighbor ? findFirstPanel(neighbor) : null
+              if (firstPanel && state.activeViewId === viewId) {
+                state.activeViewId = firstPanel.viewId
+              }
+            }
+
+            // now, remove the view from the layout
+            const result = removePanelFromLayout(state.layout!, viewId)
+            delete state.views[viewId]
+            delete state.viewIndices[viewId]
+            state.layout = result.layout
+          })
+        )
+      },
+
+      updateSplitPanel: (panelId: string, direction: SplitDirection, sizes: number[]) => {
+        set(
+          produce((state) => {
+            state.layout = updateSplitPanelInLayout(state.layout, panelId, direction, sizes)
+          })
+        )
+      },
+
+      navigate: <T extends ViewName>(
+        viewId: string,
+        view: T,
+        props: ViewProps[T] = {} as ViewProps[T]
+      ) => {
+        set(
+          produce((state) => {
+            const currentIndex = state.viewIndices[viewId] || 0
+            const stack = state.views[viewId] || []
+
+            const newStack = stack.slice(0, currentIndex + 1)
+            newStack.push({ name: view, props })
+
+            state.views[viewId] = newStack
+            state.viewIndices[viewId] = newStack.length - 1
+          })
+        )
+      },
+
+      setViewProps: <T extends ViewName>(viewId: string, props: ViewProps[T], canUndo = false) => {
+        const { views, viewIndices } = get()
+        const currentIndex = viewIndices[viewId] || 0
+        const stack = views[viewId] || []
+        const currentView = stack[currentIndex]
+
+        if (!currentView) return
+
+        set(
+          produce((state) => {
+            if (canUndo) {
+              const newStack = stack.slice(0, currentIndex + 1)
+              newStack.push({
+                name: currentView.name as T,
+                props: { ...props }
+              })
+              state.views[viewId] = newStack
+              state.viewIndices[viewId] = newStack.length - 1
+            } else {
+              const newStack = [...stack]
+              newStack[currentIndex] = {
+                name: currentView.name as T,
+                props: { ...props }
+              }
+              state.views[viewId] = newStack
+            }
+          })
+        )
+      },
+
+      setViewProp: <T extends ViewName, K extends keyof ViewProps[T]>(
+        viewId: string,
+        key: K,
+        value: ViewProps[T][K],
+        canUndo = false
+      ) => {
+        const { views, viewIndices } = get()
+        const currentIndex = viewIndices[viewId] || 0
+        const stack = views[viewId] || []
+        const currentView = stack[currentIndex]
+
+        if (!currentView) return
+
+        const updatedProps = { ...currentView.props, [key]: value }
+
+        set(
+          produce((state) => {
+            if (canUndo) {
+              const newStack = stack.slice(0, currentIndex + 1)
+              newStack.push({
+                name: currentView.name as T,
+                props: updatedProps
+              })
+              state.views[viewId] = newStack
+              state.viewIndices[viewId] = newStack.length - 1
+            } else {
+              const newStack = [...stack]
+              newStack[currentIndex] = {
+                name: currentView.name as T,
+                props: updatedProps
+              }
+              state.views[viewId] = newStack
+            }
+          })
+        )
+      },
+
+      goBack: (viewId: string) => {
+        const { viewIndices } = get()
+        const currentIndex = viewIndices[viewId] || 0
+        if (currentIndex > 0) {
+          set(
+            produce((state) => {
+              state.viewIndices[viewId] = currentIndex - 1
+            })
+          )
+        }
+      },
+
+      goForward: (viewId: string) => {
+        const { views, viewIndices } = get()
+        const currentIndex = viewIndices[viewId] || 0
+        const stack = views[viewId] || []
+        if (currentIndex < stack.length - 1) {
+          set(
+            produce((state) => {
+              state.viewIndices[viewId] = currentIndex + 1
+            })
+          )
+        }
+      },
+
+      setActiveView: (viewId: string) => {
+        set(
+          produce((state) => {
+            state.activeViewId = viewId
+          })
+        )
+      },
+
+      canGoBack: (viewId: string) => {
+        const { viewIndices } = get()
+        const currentIndex = viewIndices[viewId] || 0
+        return currentIndex > 0
+      },
+
+      canGoForward: (viewId: string) => {
+        const { views, viewIndices } = get()
+        const currentIndex = viewIndices[viewId] || 0
+        const stack = views[viewId] || []
+        return currentIndex < stack.length - 1
+      }
+    }),
+    {
+      name: 'workspace-storage',
+      storage: createJSONStorage(() => ({
+        getItem: async (name) => {
+          const homePath = await window.api.getHomePath()
+          await ensureBrainforgeDir(homePath)
+          const workspacePath = await window.api.joinPath(homePath, '.brainforge', 'workspace.json')
+          try {
+            const content = await window.api.readFile(workspacePath)
+            return JSON.parse(content)[name]
+          } catch (error) {
+            // If file doesn't exist, create it with empty content
+            await window.api.writeFile(workspacePath, '{}')
+            return null
+          }
+        },
+        setItem: async (name, value) => {
+          const homePath = await window.api.getHomePath()
+          await ensureBrainforgeDir(homePath)
+          const workspacePath = await window.api.joinPath(homePath, '.brainforge', 'workspace.json')
+          let parsed = {}
+          try {
+            const content = await window.api.readFile(workspacePath)
+            parsed = JSON.parse(content)
+          } catch {
+            // File doesn't exist yet, use empty object
+          }
+          parsed[name] = value
+          await window.api.writeFile(workspacePath, JSON.stringify(parsed, null, 2))
+        },
+        removeItem: async (name) => {
+          const homePath = await window.api.getHomePath()
+          await ensureBrainforgeDir(homePath)
+          const workspacePath = await window.api.joinPath(homePath, '.brainforge', 'workspace.json')
+          try {
+            const content = await window.api.readFile(workspacePath)
+            const parsed = JSON.parse(content)
+            delete parsed[name]
+            await window.api.writeFile(workspacePath, JSON.stringify(parsed, null, 2))
+          } catch {
+            // If file doesn't exist, nothing to remove
+          }
+        }
+      })),
+      partialize: (state) => ({
+        views: state.views,
+        viewIndices: state.viewIndices,
+        activeViewId: state.activeViewId,
+        layout: state.layout
+      }),
+      onRehydrateStorage: () => (state) => {
+        if (!state) {
+          return {
+            views: {},
+            viewIndices: {},
+            activeViewId: undefined,
+            layout: undefined
+          }
+        }
+
+        // Ensure all properties exist with proper defaults
+        return {
+          views: state.views || {},
+          viewIndices: state.viewIndices || {},
+          activeViewId: state.activeViewId || undefined,
+          layout: state.layout || undefined
+        }
+      },
+      skipHydration: true // Add this to ensure we wait for async storage
+    }
+  )
+)

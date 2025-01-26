@@ -89,7 +89,7 @@ export function WorkspaceView() {
         : SplitDirection.Horizontal
     const insertAt = position === 'left' || position === 'top' ? 'before' : 'after'
 
-    const draggedViewHistory = views.get(draggedViewId)
+    const draggedViewHistory = views[draggedViewId]
     if (!draggedViewHistory) return
 
     removeView(draggedViewId)
@@ -98,8 +98,8 @@ export function WorkspaceView() {
   }
 
   const renderView = (viewId: string, gutterPositions: GutterPosition[]) => {
-    const currentIndex = viewIndices.get(viewId) || 0
-    const stack = views.get(viewId) ?? []
+    const currentIndex = viewIndices[viewId] || 0
+    const stack = views[viewId] || []
     const { name } = stack[currentIndex]
     const Icon = ViewIcons[name]
 
@@ -172,7 +172,7 @@ export function WorkspaceView() {
   }
 
   const draggedView = draggedViewId
-    ? views.get(draggedViewId)?.[viewIndices.get(draggedViewId) || 0]
+    ? views[draggedViewId]?.[viewIndices[draggedViewId] || 0]
     : undefined
   const draggedViewName = draggedView?.name
   const DraggedViewIcon = draggedViewName ? ViewIcons[draggedViewName] : undefined

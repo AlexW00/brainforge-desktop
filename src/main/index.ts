@@ -250,6 +250,15 @@ app.whenReady().then(async () => {
     }
   })
 
+  ipcMain.handle('mkdir', async (_, path: string) => {
+    try {
+      await mkdir(path, { recursive: true })
+    } catch (error) {
+      console.error('Error creating directory:', error)
+      throw error
+    }
+  })
+
   ipcMain.handle('dialog:openDirectory', async () => {
     const { canceled, filePaths } = await dialog.showOpenDialog({
       properties: ['openDirectory']

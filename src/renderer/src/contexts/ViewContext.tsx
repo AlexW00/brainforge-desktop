@@ -42,8 +42,8 @@ export function ViewProvider<T extends ViewName>({
   viewId: string
 }) {
   const workspace = useWorkspace()
-  const viewIndex = workspace.viewIndices.get(viewId)!
-  const view = workspace.views.get(viewId)![viewIndex]
+  const viewIndex = workspace.viewIndices[viewId]
+  const view = workspace.views[viewId][viewIndex]
 
   const value = React.useMemo(() => {
     return {

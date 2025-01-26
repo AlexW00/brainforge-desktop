@@ -13,6 +13,7 @@ const api = {
   openDirectory: () => ipcRenderer.invoke('dialog:openDirectory'),
   readFile: (path: string) => ipcRenderer.invoke('readFile', path),
   writeFile: (path: string, content: string) => ipcRenderer.invoke('writeFile', path, content),
+  mkdir: (path: string) => ipcRenderer.invoke('mkdir', path),
   watchFiles: async (path: string, options: FileWatcherOptions): Promise<FileWatcher> => {
     const watcherId = await ipcRenderer.invoke('watchFiles', path)
 
