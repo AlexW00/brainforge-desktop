@@ -70,8 +70,9 @@ const createMarkdownKeymap = (onPreviewToggle: () => void) =>
     }
   ])
 
-function MarkdownPreview({ content }: { content: string }) {
+function MarkdownPreview({ content, file }: { content: string; file: File }) {
   const { setViewProp } = useView<'files'>()
+  const dirname = file.path.substring(0, file.path.lastIndexOf('/'))
 
   // Add keyboard shortcut to exit preview mode
   useEffect(() => {
@@ -88,7 +89,23 @@ function MarkdownPreview({ content }: { content: string }) {
 
   return (
     <div className="prose prose-invert max-w-none p-4 overflow-auto">
-      <ReactMarkdown rehypePlugins={[rehypeRaw]}>{content}</ReactMarkdown>
+      <ReactMarkdown
+        rehypePlugins={[rehypeRaw]}
+        components={{
+          img: ({ src, alt, ...props }) => {
+            if (!src) return null
+            // If the src is a relative path, make it absolute
+            const absoluteSrc = src.startsWith('.')
+              ? `file://${dirname}/${src.substring(2)}`
+              : src.startsWith('/')
+                ? `file://${src}`
+                : src
+            return <img src={absoluteSrc} alt={alt} {...props} />
+          }
+        }}
+      >
+        {content}
+      </ReactMarkdown>
     </div>
   )
 }
@@ -166,7 +183,7 @@ function TextViewer({ file }: FileViewProps) {
   return (
     <div className="flex-1 overflow-hidden min-h-0 relative bg-background">
       {view.props.isPreview ? (
-        <MarkdownPreview content={content} />
+        <MarkdownPreview content={content} file={file} />
       ) : (
         <CodeMirror
           value={content}
