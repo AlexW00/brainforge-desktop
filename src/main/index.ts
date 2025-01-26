@@ -53,10 +53,14 @@ async function saveState(state: AppState): Promise<void> {
 
 function createForgePickerWindow(): void {
   forgePickerWindow = new BrowserWindow({
-    width: 600,
+    width: 480,
     height: 400,
     show: false,
     autoHideMenuBar: true,
+    resizable: false,
+    maximizable: false,
+    fullscreenable: false,
+    backgroundColor: '#ffffff',
     ...(process.platform === 'linux' ? { icon: join(__dirname, '../../build/icon.png') } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
