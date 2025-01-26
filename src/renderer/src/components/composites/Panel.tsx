@@ -59,7 +59,7 @@ export function Panel({
   return (
     <Card
       ref={panelRef}
-      className="flex flex-col h-full p-[13px] relative"
+      className="flex flex-col h-full p-[13px] relative overflow-hidden"
       onClick={() => onActivate(viewId)}
       style={{
         borderColor: 'hsl(var(--border))',
@@ -77,7 +77,7 @@ export function Panel({
         canSplitHorizontal={dimensions.height >= 400}
         canSplitVertical={dimensions.width >= 400}
       />
-      <div className="flex-1 overflow-auto min-h-0">{children}</div>
+      <div className="flex-1 overflow-auto min-h-0 min-w-0">{children}</div>
       <PanelDropZones
         viewId={viewId}
         activeDropId={activeDropId}

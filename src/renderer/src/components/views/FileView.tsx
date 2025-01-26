@@ -27,7 +27,11 @@ function TextViewer({ file }: FileViewerProps) {
     window.api.readFile(file.path).then(setContent)
   }, [file.path])
 
-  return <div className="flex-1 p-4 font-mono text-sm whitespace-pre overflow-auto">{content}</div>
+  return (
+    <div className="flex-1 p-4 font-mono text-sm overflow-auto">
+      <div className="whitespace-pre-wrap break-words w-full">{content}</div>
+    </div>
+  )
 }
 
 function DefaultViewer({ file }: FileViewerProps) {
