@@ -7,7 +7,7 @@ Brainforge is a prototypical Obsidian clone.
 It offers:
 
 - _basic_ **Markdown** support and File Browsing
-- an integrated **browser** (e.g. -> [lobsters](https://lobste.rs/))
+- an integrated **browser**
 - **workspace** management
 
 ## Installation
