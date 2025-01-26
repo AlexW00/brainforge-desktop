@@ -1,10 +1,10 @@
 import { SplitDirection } from '@devbookhq/splitter'
 import { MoreVertical, SplitSquareHorizontal, SplitSquareVertical, X } from 'lucide-react'
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
 } from '../../ui/dropdown-menu'
 
 interface PanelActionButtonsProps {

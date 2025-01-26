@@ -1,11 +1,11 @@
 import { Brain } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import {
-    Breadcrumb,
-    BreadcrumbItem,
-    BreadcrumbLink,
-    BreadcrumbList,
-    BreadcrumbSeparator
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbSeparator
 } from '../ui/breadcrumb'
 
 interface PathBreadcrumbsProps {

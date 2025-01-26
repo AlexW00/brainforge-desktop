@@ -2,29 +2,29 @@ import { useEffect } from 'react'
 import { useWorkspace } from '../contexts/WorkspaceContext'
 
 export function NavigationListener() {
-  const { canGoBack, canGoForward, goBack, goForward } = useWorkspace()
+  const { canGoBack, canGoForward, goBack, goForward, activeViewId } = useWorkspace()
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       // Handle Alt+Left and Alt+Right for back/forward
       if (event.altKey) {
-        if (event.key === 'ArrowLeft' && canGoBack()) {
+        if (event.key === 'ArrowLeft' && activeViewId && canGoBack(activeViewId)) {
           event.preventDefault()
-          goBack()
-        } else if (event.key === 'ArrowRight' && canGoForward()) {
+          goBack(activeViewId)
+        } else if (event.key === 'ArrowRight' && activeViewId && canGoForward(activeViewId)) {
           event.preventDefault()
-          goForward()
+          goForward(activeViewId)
         }
       }
 
       // Handle browser back/forward buttons (Cmd/Ctrl + [ or ])
       if (event.metaKey || event.ctrlKey) {
-        if (event.key === '[' && canGoBack()) {
+        if (event.key === '[' && activeViewId && canGoBack(activeViewId)) {
           event.preventDefault()
-          goBack()
-        } else if (event.key === ']' && canGoForward()) {
+          goBack(activeViewId)
+        } else if (event.key === ']' && activeViewId && canGoForward(activeViewId)) {
           event.preventDefault()
-          goForward()
+          goForward(activeViewId)
         }
       }
     }
@@ -34,14 +34,14 @@ export function NavigationListener() {
       if (event.button === 4 || event.button === 8) {
         // Forward button
         event.preventDefault()
-        if (canGoForward()) {
-          goForward()
+        if (activeViewId && canGoForward(activeViewId)) {
+          goForward(activeViewId)
         }
       } else if (event.button === 3) {
         // Back button
         event.preventDefault()
-        if (canGoBack()) {
-          goBack()
+        if (activeViewId && canGoBack(activeViewId)) {
+          goBack(activeViewId)
         }
       }
     }
