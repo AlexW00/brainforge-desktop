@@ -94,13 +94,32 @@ function createWindow(): void {
       sandbox: false,
       webviewTag: true,
       contextIsolation: true,
-      webSecurity: false
+      webSecurity: false,
+      zoomFactor: 1.0
+    }
+  })
+
+  // Register zoom keyboard shortcuts
+  mainWindow.webContents.on('before-input-event', (event, input) => {
+    if (input.control) {
+      if (input.key === '=' || input.key === '+') {
+        event.preventDefault()
+        const currentZoom = mainWindow?.webContents.getZoomFactor() || 1.0
+        mainWindow?.webContents.setZoomFactor(Math.min(currentZoom + 0.1, 3.0))
+      } else if (input.key === '-') {
+        event.preventDefault()
+        const currentZoom = mainWindow?.webContents.getZoomFactor() || 1.0
+        mainWindow?.webContents.setZoomFactor(Math.max(currentZoom - 0.1, 0.3))
+      } else if (input.key === '0') {
+        event.preventDefault()
+        mainWindow?.webContents.setZoomFactor(1.0)
+      }
     }
   })
 
   mainWindow.on('ready-to-show', () => {
     mainWindow?.setTitle('BrainForge')
-    mainWindow?.maximize()
+    // mainWindow?.maximize()
     mainWindow?.show()
   })
 

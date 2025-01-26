@@ -9,6 +9,27 @@ type ScanElement = {
   offset: number
 }
 
+const isValidUrl = (urlString: string): boolean => {
+  try {
+    new URL(urlString)
+    return true
+  } catch {
+    return false
+  }
+}
+
+const processUrl = (input: string): string => {
+  // If it's already a valid URL, return it
+  if (isValidUrl(input)) return input
+
+  // If it starts with www. add https://
+  if (input.startsWith('www.')) return `https://${input}`
+
+  // If it's not a valid URL, treat it as a search query
+  const searchQuery = encodeURIComponent(input)
+  return `https://www.google.com/search?q=${searchQuery}`
+}
+
 export function BrowserView() {
   const { view, setViewProp, goBack, goForward } = useView<'browser'>()
   const webviewRef = useRef<Electron.WebviewTag>(null)
@@ -61,11 +82,16 @@ export function BrowserView() {
     }
   }, [])
 
+  const handleNavigation = (url: string) => {
+    const processedUrl = processUrl(url)
+    setViewProp('url', processedUrl, true)
+  }
+
   return (
     <div className="flex h-full flex-col">
       <BrowserNavigation
         url={view.props.url}
-        onNavigate={(url) => setViewProp('url', url, true)}
+        onNavigate={handleNavigation}
         onRefresh={() => webviewRef.current?.reload()}
       />
       <webview ref={webviewRef} src={view.props.url} className="flex-1" />

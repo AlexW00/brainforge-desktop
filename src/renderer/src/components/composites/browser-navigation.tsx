@@ -27,8 +27,8 @@ export function BrowserNavigation({
       </Button>
       <form onSubmit={handleSubmit} className="flex-1">
         <Input
-          type="url"
-          placeholder="Enter URL"
+          type="text"
+          placeholder="Search or enter URL"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
         />

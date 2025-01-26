@@ -24,7 +24,7 @@ function MarkdownPreview({ content, file }: { content: string; file: File }) {
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [])
+  }, [viewId, activeViewId, setViewProp])
 
   return (
     <div className="h-full flex flex-col">
