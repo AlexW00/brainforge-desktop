@@ -65,7 +65,7 @@ const createMarkdownKeymap = () =>
   ])
 
 function MarkdownPreview({ content, file }: { content: string; file: File }) {
-  const { setViewProp, viewId } = useView<'files'>()
+  const { setViewProp, viewId, navigate } = useView<'files'>()
   const { activeViewId } = useWorkspace()
   const dirname = file.path.substring(0, file.path.lastIndexOf('/'))
 
@@ -100,7 +100,21 @@ function MarkdownPreview({ content, file }: { content: string; file: File }) {
                       ? `file://${src}`
                       : src
                   return <img src={absoluteSrc} alt={alt} {...props} />
-                }
+                },
+                a: ({ href, children, ...props }) => (
+                  <a
+                    href={href}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      if (href) {
+                        navigate('browser', { url: href })
+                      }
+                    }}
+                    {...props}
+                  >
+                    {children}
+                  </a>
+                )
               }}
             >
               {content}
