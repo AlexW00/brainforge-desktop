@@ -298,18 +298,18 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           console.error('View not found')
           return
         }
-        const viewIndex = get().viewIndices[viewId]
-
-        if (viewIndex === undefined) {
-          console.error('View index not found')
-          return
-        }
-
-        const newViewId = crypto.randomUUID()
 
         if (!splitView) {
           splitView = view
         }
+
+        let viewIndex = get().viewIndices[viewId]
+        // try getting the view, if undefined use length as viewIndex
+        if (viewIndex === undefined || splitView[viewIndex] === undefined) {
+          viewIndex = splitView.length
+        }
+
+        const newViewId = crypto.randomUUID()
 
         set(
           produce((state) => {
