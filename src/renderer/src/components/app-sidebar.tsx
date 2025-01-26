@@ -29,7 +29,7 @@ export function AppSidebar(): JSX.Element {
 
   const handleItemClick = (view: ViewName) => {
     if (activeViewId) {
-      navigate(activeViewId, view, true)
+      navigate(activeViewId, view)
     } else {
       insertRootView([{ name: view, props: {} }])
     }

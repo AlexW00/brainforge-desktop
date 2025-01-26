@@ -10,14 +10,14 @@ export function NodeView() {
   const { isInitialized, listDirectory, getNode } = useFileCache()
 
   useEffect(() => {
-    if (!view.props.path) {
+    if (!view.props.path || view.props.path === '') {
       const initPath = async () => {
         const homePath = await window.api.getHomePath()
         setViewProp('path', homePath)
       }
       initPath()
     }
-  }, [])
+  }, [view.props.path])
 
   const currentPath = view.props.path ?? ''
   const currentNode = isInitialized ? getNode(currentPath) : null
@@ -60,7 +60,7 @@ export function NodeView() {
       />
       {isInitialized && !currentNode ? (
         <div className="flex flex-1 items-center justify-center text-muted-foreground">
-          This file or directory does not exist
+          This file or directory &quot;{currentPath}&quot; does not exist
         </div>
       ) : (
         <FileTable
