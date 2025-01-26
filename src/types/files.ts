@@ -3,6 +3,7 @@ export interface FileEntry {
   name: string
   type: 'file' | 'folder'
   path: string
+  mimeType?: string
 }
 
 export interface FileWatcherOptions {
@@ -25,7 +26,9 @@ export interface FileStats {
 
 export interface FileSystemAPI {
   getHomePath: () => Promise<string>
-  readDir: (path: string) => Promise<Array<{ name: string; type: 'file' | 'folder'; path: string }>>
+  readDir: (
+    path: string
+  ) => Promise<Array<{ name: string; type: 'file' | 'folder'; path: string; mimeType: string }>>
   joinPath: (...paths: string[]) => Promise<string>
   getStats: (path: string) => Promise<{ isDirectory: boolean; isFile: boolean; mtime: number }>
   getRecentForges: () => Promise<string[]>
@@ -44,6 +47,7 @@ export interface Node {
 
 export interface File extends Node {
   type: 'file'
+  mimeType: string
   data: Record<string, unknown>
 }
 

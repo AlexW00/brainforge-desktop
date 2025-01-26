@@ -122,6 +122,7 @@ export const useFileCacheStore = create<FileCacheState>((set, get) => ({
                 path,
                 lastUpdated: Date.now(),
                 lastIndexed: Date.now(),
+                mimeType: 'application/octet-stream', // Default MIME type, will be updated when directory is scanned
                 data: {}
               } as File)
         )
@@ -154,6 +155,7 @@ export const useFileCacheStore = create<FileCacheState>((set, get) => ({
             path: fullPath,
             lastUpdated: now,
             lastIndexed: now,
+            mimeType: file.mimeType || 'application/octet-stream',
             data: {}
           } as File
         }
