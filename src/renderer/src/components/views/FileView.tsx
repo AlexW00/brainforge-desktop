@@ -9,9 +9,10 @@ import ReactMarkdown from 'react-markdown'
 import rehypeRaw from 'rehype-raw'
 import { File } from '../../../../types/files'
 import { useView } from '../../contexts/ViewContext'
+import { useWorkspace } from '../../contexts/WorkspaceContext'
 
 // Define markdown shortcuts
-const createMarkdownKeymap = (onPreviewToggle: () => void) =>
+const createMarkdownKeymap = () =>
   keymap.of([
     {
       key: 'Mod-b',
@@ -60,24 +61,19 @@ const createMarkdownKeymap = (onPreviewToggle: () => void) =>
         })
         return true
       }
-    },
-    {
-      key: 'Mod-e',
-      run: () => {
-        onPreviewToggle()
-        return true
-      }
     }
   ])
 
 function MarkdownPreview({ content, file }: { content: string; file: File }) {
-  const { setViewProp } = useView<'files'>()
+  const { setViewProp, viewId } = useView<'files'>()
+  const { activeViewId } = useWorkspace()
   const dirname = file.path.substring(0, file.path.lastIndexOf('/'))
 
   // Add keyboard shortcut to exit preview mode
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'e' && (event.metaKey || event.ctrlKey)) {
+      console.log('handleKeyDown', event.key, event.metaKey, event.ctrlKey, viewId, activeViewId)
+      if (event.key === 'e' && (event.metaKey || event.ctrlKey) && viewId === activeViewId) {
         event.preventDefault()
         setViewProp('isPreview', false, false)
       }
@@ -85,7 +81,7 @@ function MarkdownPreview({ content, file }: { content: string; file: File }) {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [])
+  }, [activeViewId, viewId])
 
   return (
     <div className="h-full flex flex-col">
@@ -133,7 +129,8 @@ function ImageViewer({ file }: FileViewProps) {
 }
 
 function TextViewer({ file }: FileViewProps) {
-  const { view, setViewProp } = useView<'files'>()
+  const { view, setViewProp, viewId } = useView<'files'>()
+  const { activeViewId } = useWorkspace()
   const [content, setContent] = useState<string>('')
   const saveTimeoutRef = useRef<NodeJS.Timeout>()
 
@@ -170,13 +167,28 @@ function TextViewer({ file }: FileViewProps) {
   }, [])
 
   const togglePreview = () => {
-    setViewProp('isPreview', !view.props.isPreview, false)
+    if (viewId === activeViewId) {
+      setViewProp('isPreview', !(view.props?.isPreview ?? false))
+    }
   }
 
   // Add keyboard shortcut to preview mode
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'e' && (event.metaKey || event.ctrlKey)) {
+      console.log(
+        'handleKeyDown TextViewer',
+        event.key,
+        event.metaKey,
+        event.ctrlKey,
+        viewId,
+        activeViewId
+      )
+      if (
+        event.key === 'e' &&
+        (event.metaKey || event.ctrlKey) &&
+        viewId === activeViewId &&
+        !(view.props?.isPreview ?? false)
+      ) {
         event.preventDefault()
         togglePreview()
       }
@@ -184,7 +196,7 @@ function TextViewer({ file }: FileViewProps) {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [view.props.isPreview])
+  }, [view.props.isPreview, viewId, activeViewId])
 
   return (
     <div className="flex-1 overflow-hidden min-h-0 relative bg-background">
@@ -200,7 +212,7 @@ function TextViewer({ file }: FileViewProps) {
             markdown(),
             EditorView.lineWrapping,
             githubDark,
-            createMarkdownKeymap(togglePreview)
+            createMarkdownKeymap()
           ]}
           basicSetup={{
             lineNumbers: false,
