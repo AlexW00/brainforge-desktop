@@ -1,13 +1,15 @@
 import { ArrowLeftRight, Brain, FolderOpen, Globe } from 'lucide-react'
+import { useView } from '../../contexts/ViewContext'
 import { useWorkspace } from '../../contexts/WorkspaceContext'
 import { Button } from '../ui/button'
 
 export function HomeView() {
-  const { activeViewId, navigate, insertRootView } = useWorkspace()
+  const { navigate } = useView()
+  const { activeViewId, insertRootView } = useWorkspace()
 
   const handleItemClick = (view: 'files' | 'browser') => {
     if (activeViewId) {
-      navigate(activeViewId, view)
+      navigate(view)
     } else {
       insertRootView([{ name: view, props: {} }])
     }
