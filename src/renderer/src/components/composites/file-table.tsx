@@ -24,6 +24,8 @@ export function FileTable({
   onParentClick,
   isLoading
 }: FileGridProps) {
+  const visibleItems = items.filter((item) => !item.name.startsWith('.'))
+
   return (
     <div className="flex-1 overflow-auto">
       <Table>
@@ -57,7 +59,7 @@ export function FileTable({
                   <TableCell>-</TableCell>
                 </TableRow>
               )}
-              {items.map((item) => (
+              {visibleItems.map((item) => (
                 <TableRow
                   key={item.path}
                   className="cursor-pointer"
