@@ -1,4 +1,5 @@
 import MDEditor from '@uiw/react-md-editor'
+import { useTheme } from 'next-themes'
 import { useEffect, useRef, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import rehypeRaw from 'rehype-raw'
@@ -9,6 +10,7 @@ import { useWorkspace } from '../../contexts/WorkspaceContext'
 function MarkdownPreview({ content, file }: { content: string; file: File }) {
   const { setViewProp, viewId, navigate } = useView<'files'>()
   const { activeViewId } = useWorkspace()
+  const { theme } = useTheme()
   const dirname = file.path.substring(0, file.path.lastIndexOf('/'))
 
   // Add keyboard shortcut to exit preview mode
@@ -28,9 +30,9 @@ function MarkdownPreview({ content, file }: { content: string; file: File }) {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex-1 min-h-0 p-4">
+      <div className="flex-1 min-h-0 p-4 bg-background">
         <div className="h-full overflow-auto">
-          <div className="prose prose-invert max-w-none">
+          <div className={`prose max-w-none ${theme === 'dark' ? 'prose-invert' : ''}`}>
             <ReactMarkdown
               rehypePlugins={[rehypeRaw]}
               components={{
@@ -90,6 +92,7 @@ function TextViewer({ file }: FileViewProps) {
   const { activeViewId } = useWorkspace()
   const [content, setContent] = useState<string>('')
   const saveTimeoutRef = useRef<NodeJS.Timeout>()
+  const { theme } = useTheme()
 
   useEffect(() => {
     window.api.readFile(file.path).then(setContent)
@@ -150,7 +153,7 @@ function TextViewer({ file }: FileViewProps) {
       {view.props.isPreview ? (
         <MarkdownPreview content={content} file={file} />
       ) : (
-        <div data-color-mode="dark" className="h-full">
+        <div data-color-mode={theme} className="h-full [&_.wmde-markdown]:bg-background">
           <MDEditor
             value={content}
             onChange={handleChange}
@@ -159,8 +162,9 @@ function TextViewer({ file }: FileViewProps) {
             hideToolbar={true}
             style={
               {
-                '--color-canvas-default': 'black',
-                '--color-canvas-subtle': 'black'
+                '--color-canvas-default': 'hsl(var(--background))',
+                '--color-canvas-subtle': 'hsl(var(--muted))',
+                backgroundColor: 'hsl(var(--background))'
               } as React.CSSProperties
             }
           />
