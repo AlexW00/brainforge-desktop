@@ -116,7 +116,7 @@ export function WorkspaceView() {
               Icon={Icon}
               onActivate={setActiveView}
               onClose={() => removeView(viewId)}
-              onSplit={(direction, insertAt) => splitView(viewId, direction, undefined, insertAt)}
+              onSplit={(direction, insertAt) => splitView(viewId, direction, stack, insertAt)}
               isActive={activeViewId === viewId}
               isDragging={draggedViewId !== undefined}
               activeDropId={activeDropId}
