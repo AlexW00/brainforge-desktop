@@ -11,6 +11,7 @@
     "composite": true,
     "jsx": "react-jsx",
     "baseUrl": ".",
+    "types": ["electron"],
     "paths": {
       "@renderer/*": [
         "src/renderer/src/*"
