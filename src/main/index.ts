@@ -1,8 +1,8 @@
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import type { FSWatcher } from 'chokidar'
 import chokidar from 'chokidar'
-import { app, BrowserWindow, ipcMain } from 'electron'
-import { readdir, stat } from 'node:fs/promises'
+import { app, BrowserWindow, dialog, ipcMain } from 'electron'
+import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { v4 as uuidv4 } from 'uuid'
@@ -14,9 +14,68 @@ interface FileWatcher {
 
 const watchers = new Map<string, FileWatcher>()
 
+let forgePickerWindow: BrowserWindow | null = null
+let mainWindow: BrowserWindow | null = null
+let selectedForgePath: string | null = null
+
+const STATE_DIR = join(homedir(), '.brainforge')
+const STATE_FILE = join(STATE_DIR, 'state.json')
+
+async function ensureStateDir(): Promise<void> {
+  try {
+    await mkdir(STATE_DIR, { recursive: true })
+  } catch (error) {
+    console.error('Failed to create state directory:', error)
+  }
+}
+
+async function loadState(): Promise<{ recentForges: string[] }> {
+  try {
+    const data = await readFile(STATE_FILE, 'utf-8')
+    return JSON.parse(data)
+  } catch {
+    return { recentForges: [] }
+  }
+}
+
+async function saveState(state: { recentForges: string[] }): Promise<void> {
+  try {
+    await writeFile(STATE_FILE, JSON.stringify(state, null, 2))
+  } catch (error) {
+    console.error('Failed to save state:', error)
+  }
+}
+
+function createForgePickerWindow(): void {
+  forgePickerWindow = new BrowserWindow({
+    width: 600,
+    height: 400,
+    show: false,
+    autoHideMenuBar: true,
+    ...(process.platform === 'linux' ? { icon: join(__dirname, '../../build/icon.png') } : {}),
+    webPreferences: {
+      preload: join(__dirname, '../preload/index.js'),
+      sandbox: false,
+      contextIsolation: true
+    }
+  })
+
+  forgePickerWindow.on('ready-to-show', () => {
+    forgePickerWindow?.show()
+  })
+
+  if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+    forgePickerWindow.loadURL(`${process.env['ELECTRON_RENDERER_URL']}/#/forge-picker`)
+  } else {
+    forgePickerWindow.loadFile(join(__dirname, '../renderer/index.html'), {
+      hash: 'forge-picker'
+    })
+  }
+}
+
 function createWindow(): void {
   // Create the browser window.
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 1280,
     height: 720,
     show: false,
@@ -31,7 +90,7 @@ function createWindow(): void {
   })
 
   mainWindow.on('ready-to-show', () => {
-    mainWindow.show()
+    mainWindow?.show()
   })
 
   // HMR for renderer base on electron-vite cli.
@@ -50,7 +109,9 @@ function createWindow(): void {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+  await ensureStateDir()
+
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')
 
@@ -63,16 +124,51 @@ app.whenReady().then(() => {
 
   // IPC handlers
   ipcMain.handle('getHomePath', () => {
-    return homedir()
+    return selectedForgePath || homedir()
+  })
+
+  ipcMain.handle('getRecentForges', async () => {
+    const state = await loadState()
+    return state.recentForges
+  })
+
+  ipcMain.handle('selectForge', async (_, path: string) => {
+    console.log('Selecting forge path:', path)
+    selectedForgePath = path
+    const state = await loadState()
+    const recentForges = [path, ...state.recentForges.filter((p) => p !== path)].slice(0, 10)
+    await saveState({ recentForges })
+
+    try {
+      // Verify the path exists and is accessible
+      await stat(path)
+    } catch (error) {
+      console.error('Error accessing selected forge path:', error)
+      throw new Error(`Cannot access selected directory: ${path}`)
+    }
+
+    forgePickerWindow?.close()
+    createWindow()
   })
 
   ipcMain.handle('readDir', async (_, path: string) => {
-    const entries = await readdir(path, { withFileTypes: true })
-    return entries.map((entry) => ({
-      name: entry.name,
-      type: entry.isDirectory() ? 'folder' : 'file',
-      path: join(path, entry.name)
-    }))
+    try {
+      // Ensure the path exists first
+      await stat(path)
+
+      const entries = await readdir(path, { withFileTypes: true })
+      return entries.map((entry) => ({
+        name: entry.name,
+        type: entry.isDirectory() ? 'folder' : 'file',
+        path: join(path, entry.name)
+      }))
+    } catch (error) {
+      console.error('Error reading directory:', error)
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+        throw new Error(`Directory not found: ${path}`)
+      }
+      throw error
+    }
   })
 
   ipcMain.handle('joinPath', (_, ...paths: string[]) => {
@@ -126,12 +222,28 @@ app.whenReady().then(() => {
     }
   })
 
-  createWindow()
+  ipcMain.handle('dialog:openDirectory', async () => {
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+      properties: ['openDirectory']
+    })
+    if (!canceled && filePaths.length > 0) {
+      return filePaths[0]
+    }
+    return null
+  })
+
+  createForgePickerWindow()
 
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    if (BrowserWindow.getAllWindows().length === 0) {
+      if (!selectedForgePath) {
+        createForgePickerWindow()
+      } else {
+        createWindow()
+      }
+    }
   })
 })
 

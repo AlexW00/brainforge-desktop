@@ -23,11 +23,7 @@ export function FileCacheProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const init = async () => {
-      const documentsPath = await window.api.joinPath(
-        await window.api.getHomePath(),
-        'Documents',
-        'Brainforge'
-      )
+      const documentsPath = await window.api.joinPath(await window.api.getHomePath())
       await store.initialize(documentsPath)
     }
     init()

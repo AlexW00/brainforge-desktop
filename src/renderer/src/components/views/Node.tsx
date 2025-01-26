@@ -8,13 +8,11 @@ export function NodeView() {
   const { view, navigate, setViewProp } = useView<'files'>()
   const { isInitialized, listDirectory, getNode } = useFileCache()
 
-  // Initialize with Brainforge path if no path is set
   useEffect(() => {
     if (!view.props.path) {
       const initPath = async () => {
         const homePath = await window.api.getHomePath()
-        const brainForgePath = await window.api.joinPath(homePath, 'Documents', 'Brainforge')
-        setViewProp('path', brainForgePath)
+        setViewProp('path', homePath)
       }
       initPath()
     }

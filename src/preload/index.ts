@@ -40,6 +40,27 @@ const api = {
 if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld('api', api)
+    contextBridge.exposeInMainWorld('electron', {
+      ipcRenderer: {
+        invoke: (channel: string, ...args: unknown[]) => {
+          const validChannels = [
+            'getHomePath',
+            'readDir',
+            'joinPath',
+            'watchFiles',
+            'unwatchFiles',
+            'getStats',
+            'getRecentForges',
+            'selectForge',
+            'dialog:openDirectory'
+          ]
+          if (validChannels.includes(channel)) {
+            return ipcRenderer.invoke(channel, ...args)
+          }
+          throw new Error(`Invalid channel: ${channel}`)
+        }
+      }
+    })
   } catch (error) {
     console.error(error)
   }
