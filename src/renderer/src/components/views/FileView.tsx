@@ -1,5 +1,4 @@
 import MDEditor from '@uiw/react-md-editor'
-import { useTheme } from 'next-themes'
 import { useEffect, useRef, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import rehypeRaw from 'rehype-raw'
@@ -10,7 +9,6 @@ import { useWorkspace } from '../../contexts/WorkspaceContext'
 function MarkdownPreview({ content, file }: { content: string; file: File }) {
   const { setViewProp, viewId, navigate } = useView<'files'>()
   const { activeViewId } = useWorkspace()
-  const { theme } = useTheme()
   const dirname = file.path.substring(0, file.path.lastIndexOf('/'))
 
   // Add keyboard shortcut to exit preview mode
@@ -32,7 +30,7 @@ function MarkdownPreview({ content, file }: { content: string; file: File }) {
     <div className="h-full flex flex-col">
       <div className="flex-1 min-h-0 p-4 bg-background">
         <div className="h-full overflow-auto">
-          <div className={`prose max-w-none ${theme === 'dark' ? 'prose-invert' : ''}`}>
+          <div className="prose prose-invert dark:prose-invert max-w-none">
             <ReactMarkdown
               rehypePlugins={[rehypeRaw]}
               components={{
@@ -49,10 +47,20 @@ function MarkdownPreview({ content, file }: { content: string; file: File }) {
                 a: ({ href, children, ...props }) => (
                   <a
                     href={href}
-                    onClick={(e) => {
+                    onClick={async (e) => {
                       e.preventDefault()
                       if (href) {
-                        navigate('browser', { url: href })
+                        if (href.endsWith('.md')) {
+                          if (href.startsWith('.')) {
+                            navigate('files', {
+                              path: await window.api.joinPath(dirname, href.substring(2))
+                            })
+                          } else {
+                            navigate('browser', { url: await window.api.joinPath(dirname, href) })
+                          }
+                        } else {
+                          navigate('browser', { url: href })
+                        }
                       }
                     }}
                     {...props}
@@ -92,7 +100,6 @@ function TextViewer({ file }: FileViewProps) {
   const { activeViewId } = useWorkspace()
   const [content, setContent] = useState<string>('')
   const saveTimeoutRef = useRef<NodeJS.Timeout>()
-  const { theme } = useTheme()
 
   useEffect(() => {
     window.api.readFile(file.path).then(setContent)
@@ -153,7 +160,7 @@ function TextViewer({ file }: FileViewProps) {
       {view.props.isPreview ? (
         <MarkdownPreview content={content} file={file} />
       ) : (
-        <div data-color-mode={theme} className="h-full [&_.wmde-markdown]:bg-background">
+        <div className="h-full [&_.wmde-markdown]:bg-background">
           <MDEditor
             value={content}
             onChange={handleChange}
