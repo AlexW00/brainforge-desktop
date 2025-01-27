@@ -13,7 +13,7 @@ It offers:
 ## Installation
 
 - Download Brainforge from the [releases](https://github.com/AlexW00/brainforge-desktop/releases)
-  - for macos: `xattr -c <brainforge.app>` (check [here](https://discussions.apple.com/thread/253714860?sortBy=best) for why this is necessary)
+  - for macos: also run `xattr -c <brainforge.app>` (check [here](https://discussions.apple.com/thread/253714860?sortBy=best) for why this is necessary) after downloading
 
 ## Usage
 
