@@ -27,4 +27,4 @@ It offers:
 4. It's only tested on Linux.
 5. I won't work on this project anymore (maybe I'll start in a year or so again); Until then, I'm busy [learning Japanese (- as a software engineer)](https://alexanderweichart.de/4_Projects/how-i-learn-jp/How-I-learn-Japanese-(as-a-Software-Engineer))!
 
-PS: Don't open big ass folders with this
+PS: Don't open big ass folders with this :)
